@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
+import { useSettings } from './SettingsContext';
 import { getChats, getMessages, sendMessage as apiSendMessage } from '@/api/chat';
 
 const ChatContext = createContext(null);
@@ -8,6 +9,7 @@ const ChatContext = createContext(null);
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
   const { socket } = useSocket();
+  const { isAIEnabled } = useSettings();
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState({});
@@ -22,9 +24,13 @@ export const ChatProvider = ({ children }) => {
     if (!user) return;
     try {
       const res = await getChats();
-      setChats(res.data || res);
+      let allChats = res.data || res;
+      if (!isAIEnabled('chatEnabled')) {
+        allChats = allChats.filter(c => !c.isAI);
+      }
+      setChats(allChats);
     } catch {}
-  }, [user]);
+  }, [user, isAIEnabled]);
 
   useEffect(() => { fetchChats(); }, [fetchChats]);
 
@@ -40,38 +46,34 @@ export const ChatProvider = ({ children }) => {
     }
   }, []);
 
-const sendMessage = useCallback(async (chatId, content, type = 'text', fileUrl = null, fileName = null) => {
-  try {
-    const res = await apiSendMessage(chatId, { content, type, fileUrl, fileName });
-    const newMsg = res.data || res;
-    setMessages(prev => ({
-      ...prev,
-      [chatId]: [...(prev[chatId] || []), newMsg],
-    }));
-    setChats(prev => {
-      const updated = prev.map(c =>
-        c._id === chatId
-          ? { ...c, lastMessage: { sender: user._id, content: content || '📎 File', type, createdAt: new Date() }, updatedAt: new Date() }
-          : c
-      );
-      return updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    });
-    return newMsg;
-  } catch {
-    return null;
-  }
-}, [user]);
+  const sendMessage = useCallback(async (chatId, content, type = 'text', fileUrl = null, fileName = null) => {
+    try {
+      const body = { content, type };
+      if (fileUrl) body.fileUrl = fileUrl;
+      if (fileName) body.fileName = fileName;
+      const res = await apiSendMessage(chatId, body);
+      const newMsg = res.data || res;
+      setMessages(prev => ({ ...prev, [chatId]: [...(prev[chatId] || []), newMsg] }));
+      setChats(prev => {
+        const updated = prev.map(c =>
+          c._id === chatId
+            ? { ...c, lastMessage: { sender: user._id, content: type === 'image' ? '📷 Image' : type === 'file' ? '📎 File' : content, type, createdAt: new Date() }, updatedAt: new Date() }
+            : c
+        );
+        return updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      });
+      return newMsg;
+    } catch {
+      return null;
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!socket) return;
 
     socket.on('chat:newMessage', (message) => {
       const chatId = message.chat;
-      setMessages(prev => ({
-        ...prev,
-        [chatId]: [...(prev[chatId] || []), message],
-      }));
-      // Refetch chats for updated unread count and last message
+      setMessages(prev => ({ ...prev, [chatId]: [...(prev[chatId] || []), message] }));
       fetchChats();
     });
 

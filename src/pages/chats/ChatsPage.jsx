@@ -13,7 +13,7 @@ import { Modal } from '@/components/ui/Modal';
 import toast from 'react-hot-toast';
 
 export const ChatsPage = () => {
-  const { isFeatureEnabled } = useSettings();
+  const { isFeatureEnabled, isAIEnabled } = useSettings();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [chats, setChats] = useState([]);
@@ -22,16 +22,21 @@ export const ChatsPage = () => {
   const [followers, setFollowers] = useState([]);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
   const chatEnabled = isFeatureEnabled('chat');
+  const aiChatEnabled = isAIEnabled('chatEnabled');
 
   useEffect(() => {
     if (!chatEnabled) return;
     fetchChats();
-  }, [chatEnabled]);
+  }, [chatEnabled, aiChatEnabled]);
 
   const fetchChats = async () => {
     try {
       const res = await getChats();
-      setChats(res.data || res);
+      let allChats = res.data || res;
+      if (!aiChatEnabled) {
+        allChats = allChats.filter(c => !c.isAI);
+      }
+      setChats(allChats);
     } catch (err) {
       console.error('Failed to load chats');
     } finally {

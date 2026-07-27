@@ -25,10 +25,12 @@ export const AIChatPage = () => {
   const emojiRef = useRef(null);
   const aiEnabled = isAIEnabled('chatEnabled');
 
-  useEffect(() => {
-    if (!aiEnabled || !user) return;
-    loadHistory();
-  }, [aiEnabled, user]);
+ useEffect(() => {
+  if (!aiEnabled) {
+    navigate('/chats');
+    toast.error('HDM AI is currently disabled');
+  }
+}, [aiEnabled]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 

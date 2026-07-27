@@ -48,10 +48,18 @@ export const SettingsProvider = ({ children }) => {
         getSiteConfig(),
         getSiteToggles(),
       ]);
-      setSettings({
-        ...configRes.data,
-        toggles: togglesRes.data,
-      });
+      setSettings(prev => ({
+        ...prev,
+        systemName: configRes.data?.systemName || prev.systemName,
+        tagline: configRes.data?.tagline || prev.tagline,
+        supportEmail: configRes.data?.supportEmail || prev.supportEmail,
+        supportPhone: configRes.data?.supportPhone || prev.supportPhone,
+        logo: configRes.data?.logo || prev.logo,
+        downloads: configRes.data?.downloads || prev.downloads,
+        uploads: configRes.data?.uploads || prev.uploads,
+        limits: configRes.data?.limits || prev.limits,
+        toggles: togglesRes.data || prev.toggles,
+      }));
     } catch {
       // Use defaults on error
     } finally {
@@ -61,7 +69,8 @@ export const SettingsProvider = ({ children }) => {
 
   useEffect(() => {
     fetchSettings();
-    const interval = setInterval(fetchSettings, 5 * 60 * 1000);
+    // Refetch every 2 minutes to catch admin changes
+    const interval = setInterval(fetchSettings, 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchSettings]);
 
