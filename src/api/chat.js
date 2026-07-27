@@ -1,0 +1,22 @@
+import api from './axios';
+
+export const getChats = () => api.get('/chats');
+export const getChatById = (id) => api.get(`/chats/${id}`);
+export const getMessages = (chatId, page = 1) => api.get(`/chats/${chatId}/messages?page=${page}`);
+export const sendMessage = (chatId, data) => api.post(`/chats/${chatId}/messages`, data);
+export const editMessage = (id, data) => api.patch(`/messages/${id}`, data);
+export const deleteMessage = (id) => api.delete(`/messages/${id}`);
+export const markAsRead = (chatId) => api.post(`/chats/${chatId}/read`);
+export const createDirectChat = (userId) => api.post('/chats/direct', { userId });
+export const createGroupChat = (data) => api.post('/chats/group', data);
+export const updateGroupChat = (id, data) => api.patch(`/chats/${id}`, data);
+export const addParticipant = (id, userId) => api.post(`/chats/${id}/participants`, { userId });
+export const removeParticipant = (id, userId) => api.delete(`/chats/${id}/participants/${userId}`);
+export const leaveChat = (id) => api.post(`/chats/${id}/leave`);
+export const pinChat = (id) => api.post(`/chats/${id}/pin`);
+export const getAgoraToken = (id) => api.post(`/chats/${id}/agora-token`);
+export const pinFile = (id, data) => api.post(`/chats/${id}/files`, data);
+export const unpinFile = (id, fileId) => api.delete(`/chats/${id}/files/${fileId}`);
+export const aiChat = (data) => api.post('/chats/ai/chat', data);
+export const createPoll = (chatId, data) => api.post(`/chats/${chatId}/poll`, data);
+export const votePoll = (messageId, optionIndex) => api.post(`/messages/${messageId}/poll/vote`, { optionIndex });
