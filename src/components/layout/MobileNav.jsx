@@ -20,7 +20,7 @@ export const MobileNav = () => {
   const visibleTabs = tabs.filter(tab => !tab.feature || isFeatureEnabled(tab.feature));
 
   return (
-    <footer className="bg-[var(--color-surface)] border-t border-[var(--color-border)] flex justify-around items-center px-1 py-1.5 flex-shrink-0 fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto z-50">
+    <footer className="bg-[var(--color-surface)] border-t border-[var(--color-border)] flex justify-around items-center px-1 py-1.5 flex-shrink-0 sticky bottom-0 z-50">
       {visibleTabs.map(tab => {
         const isActive = tab.path === '/' ? pathname === '/' || pathname === '/posts' : pathname.startsWith(tab.path);
         return (
