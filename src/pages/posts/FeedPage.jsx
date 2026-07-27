@@ -49,12 +49,18 @@ export const FeedPage = () => {
   const fetchStories = useCallback(async () => { if (!storiesEnabled) return; try { const res = await getStories(); setStories(res.data || res); } catch {} }, [storiesEnabled]);
 
   const fetchSuggestions = useCallback(async () => {
-    if (!user) return;
     try {
-      const [usersRes, followingRes] = await Promise.all([searchUsers('', 1), getFollowing(user._id)]);
-      const allUsers = (usersRes.data || usersRes).filter(u => u._id !== user?._id);
-      const followingIds = new Set((followingRes.data || followingRes).map(f => f._id));
-      setSuggestions(allUsers.filter(u => !followingIds.has(u._id)).slice(0, 5));
+      const res = await searchUsers('', 1);
+      const allUsers = (res.data || res).filter(u => u._id !== user?._id);
+      if (user) {
+        try {
+          const followingRes = await getFollowing(user._id);
+          const followingIds = new Set((followingRes.data || followingRes).map(f => f._id));
+          setSuggestions(allUsers.filter(u => !followingIds.has(u._id)).slice(0, 5));
+        } catch { setSuggestions(allUsers.slice(0, 5)); }
+      } else {
+        setSuggestions(allUsers.slice(0, 5));
+      }
     } catch {}
   }, [user]);
 
@@ -64,7 +70,12 @@ export const FeedPage = () => {
   const handleLoadMore = () => { if (hasMore && !loadingMore) fetchPosts(page + 1, tab); };
   const handlePostCreated = (newPost) => { setPosts(prev => [newPost, ...prev]); setShowCreate(false); };
   const handlePostDeleted = (postId) => { setPosts(prev => prev.filter(p => p._id !== postId)); };
-  const handleFollow = async (personId) => { try { await followUser(personId); setSuggestions(prev => prev.filter(p => p._id !== personId)); toast.success('Following!'); } catch { toast.error('Failed'); } };
+
+  const handleFollow = async (personId) => {
+    if (!user) { navigate('/login'); return; }
+    try { await followUser(personId); setSuggestions(prev => prev.filter(p => p._id !== personId)); toast.success('Following!'); }
+    catch { toast.error('Failed'); }
+  };
 
   if (!postsEnabled) return <EmptyState icon="📰" title="Posts are currently disabled" description="The admin has disabled this feature." />;
 
