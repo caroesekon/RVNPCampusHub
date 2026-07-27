@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import toast from 'react-hot-toast';
 
 export const LoginPage = () => {
@@ -41,9 +40,31 @@ export const LoginPage = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="yourname@rvnp.ac.ke" />
-        <Input label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
-        <Button type="submit" className="w-full" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</Button>
+        <div>
+          <label className="block text-sm font-semibold mb-1 text-[var(--color-text-secondary)]">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="davis@rvnp.ac.ke"
+            className="w-full px-4 py-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)]/30 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1 text-[var(--color-text-secondary)]">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="••••••••"
+            className="w-full px-4 py-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)]/30 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          />
+        </div>
+
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </Button>
       </form>
 
       <div className="text-center mt-4 space-y-2">
@@ -51,7 +72,10 @@ export const LoginPage = () => {
       </div>
 
       <div className="text-center mt-6">
-        <p className="text-sm text-[var(--color-text-secondary)]">Don't have an account? <Link to="/register" className="text-[var(--color-primary)] font-semibold hover:underline">Register</Link></p>
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-[var(--color-primary)] font-semibold hover:underline">Register</Link>
+        </p>
       </div>
     </div>
   );

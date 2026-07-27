@@ -20,6 +20,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdate }) => {
   const [following, setFollowing] = useState(profile.followers?.some(f => f === user?._id || f?._id === user?._id));
   const [blocked, setBlocked] = useState(profile.blockedUsers?.includes(user?._id));
   const [resending, setResending] = useState(false);
+  const [imageViewer, setImageViewer] = useState(null);
 
   const isPrivate = profile.privacy?.hideProfile && !isOwnProfile;
   const showDepartment = isOwnProfile || profile.privacy?.showDepartment !== false;
@@ -63,7 +64,11 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdate }) => {
 
   return (
     <div>
-      <div className="relative h-44 -mx-4 -mt-4 overflow-hidden">
+      {/* Cover Photo */}
+      <div
+        className="relative h-44 -mx-4 -mt-4 overflow-hidden cursor-pointer"
+        onClick={() => profile.coverPhoto && setImageViewer(profile.coverPhoto)}
+      >
         {profile.coverPhoto ? (
           <img src={profile.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
         ) : (
@@ -71,17 +76,21 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdate }) => {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg)]/80 to-transparent" />
         {isOwnProfile && (
-          <button onClick={() => setEditOpen(true)} className="absolute bottom-3 right-3 bg-black/30 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full hover:bg-black/50 transition-colors">🖼️ Edit Cover</button>
+          <button onClick={(e) => { e.stopPropagation(); setEditOpen(true); }} className="absolute bottom-3 right-3 bg-black/30 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full hover:bg-black/50 transition-colors">🖼️ Edit Cover</button>
         )}
       </div>
 
+      {/* Profile Picture */}
       <div className="relative -mt-16 flex justify-center">
-        <Avatar src={profile.avatar} name={profile.firstName} size="xl" />
+        <div className="cursor-pointer" onClick={() => profile.avatar && setImageViewer(profile.avatar)}>
+          <Avatar src={profile.avatar} name={profile.firstName} size="xl" />
+        </div>
         {isOwnProfile && (
-          <button onClick={() => setEditOpen(true)} className="absolute bottom-0 right-[calc(50%-60px)] w-8 h-8 rounded-full bg-[var(--color-surface)] border-2 border-[var(--color-border)] flex items-center justify-center text-sm shadow-md hover:bg-[var(--color-bg)] transition-colors">📷</button>
+          <button onClick={(e) => { e.stopPropagation(); setEditOpen(true); }} className="absolute bottom-0 right-[calc(50%-60px)] w-8 h-8 rounded-full bg-[var(--color-surface)] border-2 border-[var(--color-border)] flex items-center justify-center text-sm shadow-md hover:bg-[var(--color-bg)] transition-colors">📷</button>
         )}
       </div>
 
+      {/* Email Verification Banner */}
       {isOwnProfile && !profile.emailVerified && (
         <div className="mt-3 p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
           <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-300">⚠️ Email not verified</p>
@@ -89,36 +98,41 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdate }) => {
         </div>
       )}
 
+      {/* Name + Verified Badge */}
       <h2 className="text-xl font-black text-[var(--color-text)] text-center mt-2 flex items-center justify-center gap-1.5">
         {profile.firstName} {profile.lastName}
         {profile.hdmVerified && <VerifiedBadge size={18} />}
       </h2>
 
+      {/* Department • Hostel */}
       <div className="flex items-center justify-center gap-1.5 mt-0.5 text-sm text-[var(--color-text-secondary)]">
         {showDepartment && profile.department && <span className="capitalize">{profile.department.replace(/_/g, ' ')}</span>}
         {showDepartment && profile.department && showHostel && profile.hostel && <span className="text-[var(--color-text-muted)]">•</span>}
         {showHostel && profile.hostel && <span className="capitalize">{profile.hostel.replace(/_/g, ' ')}</span>}
       </div>
 
+      {/* Campus */}
       {profile.campus && <p className="text-xs text-[var(--color-text-muted)] text-center mt-0.5">{campusLabels[profile.campus] || profile.campus}</p>}
 
+      {/* Stats */}
       <div className="flex justify-center gap-8 mt-4 text-sm">
         <div className="text-center"><span className="font-bold text-[var(--color-text)] block">{formatCompactNumber(profile.postCount || 0)}</span><span className="text-xs text-[var(--color-text-secondary)]">Posts</span></div>
         <button className="text-center" onClick={() => navigate(`/friends?tab=followers&userId=${profile._id}`)}><span className="font-bold text-[var(--color-text)] block">{formatCompactNumber(profile.followers?.length || 0)}</span><span className="text-xs text-[var(--color-text-secondary)]">Followers</span></button>
         <button className="text-center" onClick={() => navigate(`/friends?tab=following&userId=${profile._id}`)}><span className="font-bold text-[var(--color-text)] block">{formatCompactNumber(profile.following?.length || 0)}</span><span className="text-xs text-[var(--color-text-secondary)]">Following</span></button>
       </div>
 
+      {/* Bio */}
       {profile.bio && <p className="text-sm text-[var(--color-text-secondary)] mt-3 text-center max-w-xs mx-auto leading-relaxed">{profile.bio}</p>}
 
+      {/* Badges */}
       {profile.badges?.length > 0 && (
         <div className="flex justify-center gap-1 mt-3 flex-wrap">
-          {profile.badges.slice(0, 6).map((b, i) => (
-            <Badge key={i} variant={BADGE_TYPES[b.type]?.variant || 'gray'} emoji={BADGE_TYPES[b.type]?.emoji}>{BADGE_TYPES[b.type]?.label || b.type}</Badge>
-          ))}
+          {profile.badges.slice(0, 6).map((b, i) => (<Badge key={i} variant={BADGE_TYPES[b.type]?.variant || 'gray'} emoji={BADGE_TYPES[b.type]?.emoji}>{BADGE_TYPES[b.type]?.label || b.type}</Badge>))}
           {profile.badges.length > 6 && <Badge variant="gray">+{profile.badges.length - 6}</Badge>}
         </div>
       )}
 
+      {/* Action Buttons */}
       <div className="flex justify-center gap-2 mt-4">
         {isOwnProfile ? (
           <>
@@ -134,6 +148,15 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdate }) => {
         )}
       </div>
 
+      {/* Full-screen Image Viewer */}
+      {imageViewer && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setImageViewer(null)}>
+          <img src={imageViewer} alt="Full size" className="max-w-full max-h-full object-contain p-4" />
+          <button onClick={() => setImageViewer(null)} className="absolute top-4 right-4 text-white text-3xl hover:text-white/80 transition-colors">✕</button>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
       {isOwnProfile && <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} user={profile} onUpdate={onUpdate} />}
     </div>
   );

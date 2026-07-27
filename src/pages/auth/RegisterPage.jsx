@@ -80,11 +80,41 @@ export const RegisterPage = () => {
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-         <Input label="First Name" name="firstName" value={form.firstName} onChange={handleChange} placeholder="Davis" />
-<Input label="Last Name" name="lastName" value={form.lastName} onChange={handleChange} placeholder="Okoth" />
+          <div>
+            <label className="block text-sm font-semibold mb-1 text-[var(--color-text-secondary)]">First Name</label>
+            <input
+              type="text" name="firstName" value={form.firstName} onChange={handleChange}
+              placeholder="Davis"
+              className="w-full px-4 py-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)]/30 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1 text-[var(--color-text-secondary)]">Last Name</label>
+            <input
+              type="text" name="lastName" value={form.lastName} onChange={handleChange}
+              placeholder="Okoth"
+              className="w-full px-4 py-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)]/30 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            />
+          </div>
         </div>
-        <Input label="Email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="davis@rvnp.ac.ke" />
-        <Input label="Password" name="password" type="password" value={form.password} onChange={handleChange} placeholder="Min 6 characters" />
+
+        <div>
+          <label className="block text-sm font-semibold mb-1 text-[var(--color-text-secondary)]">Email</label>
+          <input
+            type="email" name="email" value={form.email} onChange={handleChange}
+            placeholder="davis@rvnp.ac.ke"
+            className="w-full px-4 py-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)]/30 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1 text-[var(--color-text-secondary)]">Password</label>
+          <input
+            type="password" name="password" value={form.password} onChange={handleChange}
+            placeholder="Min 6 characters"
+            className="w-full px-4 py-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm placeholder:text-[var(--color-text-muted)]/30 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          />
+        </div>
 
         <div>
           <label className="block text-sm font-semibold mb-1 text-[var(--color-text-secondary)]">Campus</label>
@@ -103,15 +133,9 @@ export const RegisterPage = () => {
           </div>
         )}
 
-        {/* Legal Checkbox */}
         <div className="flex items-start gap-2 pt-2">
-          <input
-            type="checkbox"
-            id="terms"
-            checked={acceptedTerms}
-            onChange={(e) => setAcceptedTerms(e.target.checked)}
-            className="mt-1 w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-          />
+          <input type="checkbox" id="terms" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)}
+            className="mt-1 w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
           <label htmlFor="terms" className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
             I agree to the{' '}
             <Link to="/legal/terms" target="_blank" className="text-[var(--color-primary)] font-semibold hover:underline">Terms of Service</Link>

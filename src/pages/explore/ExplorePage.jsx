@@ -6,6 +6,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { Spinner } from '@/components/ui/Spinner';
 import { formatCompactNumber } from '@/utils/formatCurrency';
+import toast from 'react-hot-toast';
 
 export const ExplorePage = () => {
   const { settings } = useSettings();
@@ -36,6 +37,20 @@ export const ExplorePage = () => {
     else if (type === 'listing') navigate(`/market/${id}`);
   };
 
+  const handleInvite = async () => {
+    const shareData = {
+      title: 'RVNP Campus Hub',
+      text: 'Join me on RVNP Campus Hub — The Digital Quad of Rift Valley National Polytechnic from HDM!',
+      url: window.location.origin,
+    };
+    if (navigator.share) {
+      try { await navigator.share(shareData); toast.success('Thanks for sharing!'); } catch {}
+    } else {
+      await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+      toast.success('Link copied! Share with friends.');
+    }
+  };
+
   return (
     <div className="pb-20">
       <div className="relative mb-4">
@@ -55,7 +70,7 @@ export const ExplorePage = () => {
                     <div key={u._id} onClick={() => handleSelect('user', u._id)} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-bg)] cursor-pointer">
                       <Avatar src={u.avatar} name={u.firstName} size="sm" verified={u.hdmVerified} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[var(--color-text)] truncate flex items-center gap-1">{u.firstName} {u.lastName}{u.hdmVerified && <VerifiedBadge size={14} />}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text)] truncate flex items-center gap-1">{u.firstName} {u.lastName}{u.hdmVerified && <VerifiedBadge size={10} />}</p>
                         <p className="text-xs text-[var(--color-text-secondary)]">{u.department || 'RVNP'}{u.hostel ? ` • ${u.hostel}` : ''}</p>
                       </div>
                     </div>
@@ -113,9 +128,20 @@ export const ExplorePage = () => {
               ))}
             </div>
           </div>
+
           <div className="grid grid-cols-2 gap-2">
-            {[{ icon: '🏆', label: 'Leaderboard', path: '/leaderboard' },{ icon: '👥', label: 'Groups', path: '/groups' },{ icon: '🛒', label: 'Market', path: '/market' },{ icon: '🎫', label: 'Support', path: '/support' }].map(link => (
-              <button key={link.path} onClick={() => navigate(link.path)} className="bg-[var(--color-surface)] rounded-xl p-3 text-center hover:bg-[var(--color-surface-hover)] transition-colors"><span className="text-2xl block mb-1">{link.icon}</span><span className="text-xs font-semibold text-[var(--color-text)]">{link.label}</span></button>
+            {[
+              { icon: '🏆', label: 'Leaderboard', path: '/leaderboard' },
+              { icon: '👥', label: 'Groups', path: '/groups' },
+              { icon: '🛒', label: 'Market', path: '/market' },
+              { icon: '🎫', label: 'Support', path: '/support' },
+              { icon: '📤', label: 'Invite Friends', action: true },
+            ].map(link => (
+              <button key={link.label} onClick={() => link.action ? handleInvite() : navigate(link.path)}
+                className="bg-[var(--color-surface)] rounded-xl p-3 text-center hover:bg-[var(--color-surface-hover)] transition-colors">
+                <span className="text-2xl block mb-1">{link.icon}</span>
+                <span className="text-xs font-semibold text-[var(--color-text)]">{link.label}</span>
+              </button>
             ))}
           </div>
         </div>
