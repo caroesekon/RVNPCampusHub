@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { searchUsers } from '@/api/search';
 import { getTopContributors } from '@/api/leaderboard';
 import { Avatar } from '@/components/ui/Avatar';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 
 export const DesktopRightSidebar = () => {
   const { settings } = useSettings();
@@ -55,7 +56,10 @@ export const DesktopRightSidebar = () => {
                 <div key={u._id} onClick={() => navigate(`/profile/${u._id}`)} className="flex items-center gap-3 cursor-pointer hover:bg-[var(--color-surface-hover)] rounded-lg p-2 transition-colors">
                   <Avatar src={u.avatar} name={u.firstName} size="sm" />
                   <div>
-                    <p className="text-sm font-semibold text-[var(--color-text)]">{u.firstName} {u.lastName}</p>
+                    <p className="text-sm font-semibold text-[var(--color-text)] flex items-center gap-1">
+                      {u.firstName} {u.lastName}
+                      {u.hdmVerified && <VerifiedBadge size={10} />}
+                    </p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{u.department || 'RVNP'}</p>
                   </div>
                 </div>

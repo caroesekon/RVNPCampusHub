@@ -11,6 +11,7 @@ import { CreatePostBar } from './CreatePostBar';
 import { PostCard } from './PostCard';
 import { CreatePostModal } from './CreatePostModal';
 import { Avatar } from '@/components/ui/Avatar';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { Tabs } from '@/components/ui/Tabs';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -34,6 +35,7 @@ export const FeedPage = () => {
   const [posts, setPosts] = useState([]);
   const [stories, setStories] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [followingMap, setFollowingMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [tab, setTab] = useState('all');
@@ -82,7 +84,8 @@ export const FeedPage = () => {
   const handlePostCreated = (newPost) => { setPosts(prev => [newPost, ...prev]); setShowCreate(false); };
   const handlePostDeleted = (postId) => { setPosts(prev => prev.filter(p => p._id !== postId)); };
   const handleFollow = async (personId) => {
-    try { await followUser(personId); toast.success('Following!'); setSuggestions(prev => prev.filter(p => p._id !== personId)); } catch { toast.error('Failed'); }
+    try { await followUser(personId); setFollowingMap(prev => ({ ...prev, [personId]: true })); toast.success('Following!'); }
+    catch { toast.error('Failed'); }
   };
 
   if (!postsEnabled) {
@@ -106,12 +109,16 @@ export const FeedPage = () => {
                 className="flex flex-col items-center gap-1 flex-shrink-0 w-20"
               >
                 <Avatar src={person.avatar} name={person.firstName} size="lg" verified={person.hdmVerified} />
-                <span className="text-[10px] font-semibold text-[var(--color-text)] text-center truncate w-full">{person.firstName}</span>
+                <span className="text-[10px] font-semibold text-[var(--color-text)] text-center truncate w-full flex items-center justify-center gap-0.5">
+                  {person.firstName}
+                  {person.hdmVerified && <VerifiedBadge size={10} />}
+                </span>
                 <span className="text-[9px] text-[var(--color-text-muted)] text-center truncate w-full">{person.department || 'RVNP'}</span>
-                <span
-                  onClick={(e) => { e.stopPropagation(); handleFollow(person._id); }}
-                  className="text-[10px] bg-[var(--color-bg)] px-2 py-0.5 rounded-full text-[var(--color-primary)] font-semibold hover:bg-[var(--color-primary)] hover:text-white transition-colors"
-                >+ Follow</span>
+                {followingMap[person._id] ? (
+                  <span className="text-[10px] text-[var(--color-primary)] font-semibold">✓ Following</span>
+                ) : (
+                  <span onClick={(e) => { e.stopPropagation(); handleFollow(person._id); }} className="text-[10px] bg-[var(--color-bg)] px-2 py-0.5 rounded-full text-[var(--color-primary)] font-semibold hover:bg-[var(--color-primary)] hover:text-white transition-colors">+ Follow</span>
+                )}
               </button>
             ))}
           </div>

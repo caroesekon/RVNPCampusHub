@@ -3,6 +3,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { useAuth } from '@/context/AuthContext';
 import { getLeaderboard, getMyRank } from '@/api/leaderboard';
 import { Avatar } from '@/components/ui/Avatar';
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Tabs } from '@/components/ui/Tabs';
@@ -25,17 +26,11 @@ export const LeaderboardPage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [lbRes, rankRes] = await Promise.all([
-        getLeaderboard(period),
-        getMyRank(),
-      ]);
+      const [lbRes, rankRes] = await Promise.all([getLeaderboard(period), getMyRank()]);
       setLeaderboard(lbRes.data || lbRes);
       setMyRank(rankRes.data || rankRes);
-    } catch (err) {
-      console.error('Failed to load leaderboard');
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error('Failed to load leaderboard'); }
+    finally { setLoading(false); }
   };
 
   if (!leaderboardEnabled) {
@@ -48,16 +43,10 @@ export const LeaderboardPage = () => {
     { id: 'all_time', label: 'All Time' },
   ];
 
-  const getMedal = (rank) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
-    return null;
-  };
+  const getMedal = (rank) => { if (rank === 1) return '🥇'; if (rank === 2) return '🥈'; if (rank === 3) return '🥉'; return null; };
 
   return (
     <div className="pb-20">
-      {/* My Rank Card */}
       {myRank && myRank.rank && (
         <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary)]/80 rounded-xl p-4 mb-4 text-white">
           <div className="flex items-center justify-between">
@@ -75,20 +64,14 @@ export const LeaderboardPage = () => {
         </div>
       )}
 
-      {/* Period Tabs */}
       <Tabs tabs={tabs} active={period} onChange={setPeriod} className="mb-4" />
 
-      {/* Leaderboard List */}
       {loading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-3">
-              <div className="w-8 h-8 rounded-full skeleton" />
-              <div className="w-10 h-10 rounded-full skeleton" />
-              <div className="flex-1 space-y-2">
-                <div className="w-24 h-3 skeleton rounded" />
-                <div className="w-16 h-2 skeleton rounded" />
-              </div>
+              <div className="w-8 h-8 rounded-full skeleton" /><div className="w-10 h-10 rounded-full skeleton" />
+              <div className="flex-1 space-y-2"><div className="w-24 h-3 skeleton rounded" /><div className="w-16 h-2 skeleton rounded" /></div>
             </div>
           ))}
         </div>
@@ -100,47 +83,22 @@ export const LeaderboardPage = () => {
             const rank = i + 1;
             const medal = getMedal(rank);
             const isMe = entry.user?._id === user?._id || entry.userId === user?._id;
-
             return (
-              <div
-                key={entry.user?._id || i}
-                className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                  isMe ? 'bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/20' : 'hover:bg-[var(--color-surface-hover)]'
-                }`}
-              >
-                {/* Rank */}
+              <div key={entry.user?._id || i} className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${isMe ? 'bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/20' : 'hover:bg-[var(--color-surface-hover)]'}`}>
                 <div className="w-8 text-center flex-shrink-0">
-                  {medal ? (
-                    <span className="text-xl">{medal}</span>
-                  ) : (
-                    <span className="text-sm font-bold text-[var(--color-text-muted)]">#{rank}</span>
-                  )}
+                  {medal ? <span className="text-xl">{medal}</span> : <span className="text-sm font-bold text-[var(--color-text-muted)]">#{rank}</span>}
                 </div>
-
-                {/* Avatar */}
-                <Avatar
-                  src={entry.user?.avatar}
-                  name={entry.user?.firstName}
-                  size="md"
-                  verified={entry.user?.hdmVerified}
-                />
-
-                {/* Info */}
+                <Avatar src={entry.user?.avatar} name={entry.user?.firstName} size="md" verified={entry.user?.hdmVerified} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[var(--color-text)] text-sm truncate">
+                  <p className="font-semibold text-[var(--color-text)] text-sm truncate flex items-center gap-1">
                     {entry.user?.firstName} {entry.user?.lastName}
+                    {entry.user?.hdmVerified && <VerifiedBadge size={10} />}
                     {isMe && <span className="text-xs text-[var(--color-primary)] ml-1">(You)</span>}
                   </p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">
-                    {entry.user?.department || 'RVNP'}
-                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{entry.user?.department || 'RVNP'}</p>
                 </div>
-
-                {/* Score */}
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-[var(--color-text)] text-sm">
-                    {formatCompactNumber(entry.score || 0)}
-                  </p>
+                  <p className="font-bold text-[var(--color-text)] text-sm">{formatCompactNumber(entry.score || 0)}</p>
                   <p className="text-[10px] text-[var(--color-text-muted)]">pts</p>
                 </div>
               </div>

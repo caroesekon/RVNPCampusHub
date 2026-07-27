@@ -21,6 +21,7 @@ export const FollowersPage = () => {
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [followingMap, setFollowingMap] = useState({});
   const [loading, setLoading] = useState(true);
 
   const tabs = [
@@ -48,7 +49,7 @@ export const FollowersPage = () => {
 
   const handleRemove = async (id) => { if (!confirm('Remove?')) return; try { await removeFollower(id); setFollowers(prev => prev.filter(f => f._id !== id)); toast.success('Removed'); } catch { toast.error('Failed'); } };
   const handleUnfollow = async (id) => { try { await unfollowUser(id); toast.success('Unfollowed'); fetchData(); } catch { toast.error('Failed'); } };
-  const handleFollow = async (id) => { try { await followUser(id); toast.success('Following!'); fetchData(); } catch { toast.error('Failed'); } };
+  const handleFollow = async (id) => { try { await followUser(id); setFollowingMap(prev => ({ ...prev, [id]: true })); toast.success('Following!'); } catch { toast.error('Failed'); } };
 
   const list = activeTab === 'followers' ? followers : activeTab === 'following' ? following : suggestions;
   const isOwnProfile = !searchParams.get('userId') || searchParams.get('userId') === user?._id;
@@ -68,7 +69,7 @@ export const FollowersPage = () => {
       ) : (
         <div className="space-y-1">
           {list.map(person => {
-            const isFollowing = following.some(f => f._id === person._id);
+            const isFollowing = following.some(f => f._id === person._id) || followingMap[person._id];
             return (
               <div key={person._id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--color-surface-hover)] transition-colors">
                 <div onClick={() => navigate(`/profile/${person._id}`)} className="cursor-pointer">
@@ -87,8 +88,10 @@ export const FollowersPage = () => {
                       <Button variant="ghost" size="sm" onClick={() => handleRemove(person._id)}>Remove</Button>
                     ) : activeTab === 'following' ? (
                       <Button variant="outline" size="sm" onClick={() => handleUnfollow(person._id)}>Following</Button>
+                    ) : isFollowing ? (
+                      <span className="text-xs text-[var(--color-primary)] font-semibold px-2">✓ Following</span>
                     ) : (
-                      <Button size="sm" onClick={() => handleFollow(person._id)}>{isFollowing ? 'Following' : '+ Follow'}</Button>
+                      <Button size="sm" onClick={() => handleFollow(person._id)}>+ Follow</Button>
                     )}
                   </div>
                 )}
