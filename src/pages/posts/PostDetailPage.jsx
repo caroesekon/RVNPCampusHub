@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { getPostById, likePost, commentOnPost, deleteComment } from '@/api/posts';
+import { getPostById } from '@/api/posts';
+import { getComments, createComment, deleteComment } from '@/api/comments';
 import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
+import { ReactionBar } from '@/components/posts/ReactionBar';
+import { CommentItem } from '@/components/posts/CommentItem';
+import { CommentInput } from '@/components/posts/CommentInput';
+import { ReplyList } from '@/components/posts/ReplyList';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { timeAgo } from '@/utils/formatDate';
@@ -15,36 +20,58 @@ export const PostDetailPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [userReactions, setUserReactions] = useState({});
   const [loading, setLoading] = useState(true);
-  const [comment, setComment] = useState('');
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [commentPage, setCommentPage] = useState(1);
+  const [hasMoreComments, setHasMoreComments] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [loadingComments, setLoadingComments] = useState(false);
 
-  useEffect(() => { fetchPost(); }, [id]);
+  useEffect(() => { fetchPost(); fetchComments(); }, [id]);
 
   const fetchPost = async () => {
     try {
       const res = await getPostById(id);
-      const p = res.data || res;
-      setPost(p);
-      setLiked(p.likes?.includes(user?._id));
-      setLikeCount(p.likeCount || 0);
-    } catch (err) { toast.error('Post not found'); navigate('/'); }
+      setPost(res.data || res);
+    } catch { toast.error('Post not found'); navigate('/'); }
     finally { setLoading(false); }
   };
 
-  const handleLike = async () => { try { await likePost(id); setLiked(!liked); setLikeCount(prev => liked ? prev - 1 : prev + 1); } catch { toast.error('Failed'); } };
-  const handleComment = async () => {
-    if (!comment.trim()) return;
+  const fetchComments = async (page = 1) => {
+    setLoadingComments(true);
     try {
-      const res = await commentOnPost(id, comment.trim());
-      setPost(prev => ({ ...prev, comments: [...(prev.comments || []), res.data || res], commentCount: (prev.commentCount || 0) + 1 }));
-      setComment('');
+      const res = await getComments(id, page);
+      const data = res.data || res;
+      if (page === 1) setComments(data.comments);
+      else setComments(prev => [...prev, ...data.comments]);
+      setHasMoreComments(data.pagination?.hasNext || false);
+      setCommentPage(page);
+      if (data.userReactions) setUserReactions(prev => ({ ...prev, ...data.userReactions }));
+    } catch {}
+    finally { setLoadingComments(false); }
+  };
+
+  const handleComment = async (content) => {
+    try {
+      const body = { content };
+      if (replyingTo) body.parentComment = replyingTo;
+      await createComment(id, body);
+      toast.success(replyingTo ? 'Reply posted' : 'Comment posted');
+      setReplyingTo(null);
+      fetchComments(1);
+      fetchPost();
     } catch { toast.error('Failed'); }
   };
+
   const handleDeleteComment = async (commentId) => {
-    try { await deleteComment(id, commentId); setPost(prev => ({ ...prev, comments: prev.comments?.filter(c => c._id !== commentId), commentCount: (prev.commentCount || 0) - 1 })); }
+    if (!confirm('Delete this comment?')) return;
+    try { await deleteComment(commentId); toast.success('Deleted'); fetchComments(1); fetchPost(); }
     catch { toast.error('Failed'); }
+  };
+
+  const handleReply = (commentId) => {
+    setReplyingTo(commentId);
   };
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;
@@ -62,7 +89,10 @@ export const PostDetailPage = () => {
               {post.author?.firstName} {post.author?.lastName}
               {post.author?.hdmVerified && <VerifiedBadge size={12} />}
             </p>
-            <p className="text-xs text-[var(--color-text-muted)]">{timeAgo(post.createdAt)} {post.department && `• ${post.department}`}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              {timeAgo(post.createdAt)} {post.department && `• ${post.department}`}
+              {post.feeling && ` • Feeling ${post.feeling}`}
+            </p>
           </div>
         </div>
 
@@ -76,46 +106,68 @@ export const PostDetailPage = () => {
           </div>
         )}
 
-        {post.location?.name && <p className="px-4 pb-2 text-xs text-[var(--color-text-secondary)]">📍 {post.location.name}</p>}
+        {post.location?.name && (
+          <p className="px-4 pb-2 text-xs text-[var(--color-text-secondary)]">📍 {post.location.name}</p>
+        )}
 
-        <div className="flex items-center gap-6 px-4 pb-4 text-sm text-[var(--color-text-secondary)]">
-          <button onClick={handleLike} className={`flex items-center gap-1 hover:text-[var(--color-accent)] ${liked ? 'text-[var(--color-accent)] font-bold' : ''}`}>
-            {liked ? '❤️' : '🤍'} <span>{formatCompactNumber(likeCount)}</span>
-          </button>
-          <span>💬 {formatCompactNumber(post.commentCount || 0)}</span>
-          <span>🔄 {formatCompactNumber(post.repostCount || 0)}</span>
+        <div className="flex items-center justify-between px-4 pb-4 text-sm">
+          <ReactionBar postId={post._id} />
+          <div className="flex items-center gap-4 text-[var(--color-text-secondary)]">
+            <span>💬 {formatCompactNumber(post.commentCount || 0)}</span>
+            <span>🔄 {formatCompactNumber(post.repostCount || 0)}</span>
+          </div>
         </div>
       </div>
 
       <div className="mt-4">
         <h3 className="font-bold text-[var(--color-text)] text-sm mb-3">Comments ({post.commentCount || 0})</h3>
-        <div className="flex gap-2 mb-4">
-          <input value={comment} onChange={e => setComment(e.target.value)} placeholder="Write a comment..." className="input flex-1" />
-          <Button size="sm" onClick={handleComment} disabled={!comment.trim()}>Post</Button>
-        </div>
-        <div className="space-y-3">
-          {post.comments?.length === 0 && <p className="text-sm text-[var(--color-text-muted)] text-center py-6">No comments yet.</p>}
-          {post.comments?.map(c => (
-            <div key={c._id} className="flex gap-3">
-              <Avatar src={c.author?.avatar} name={c.author?.firstName} size="sm" />
-              <div className="flex-1">
-                <div className="bg-[var(--color-bg)] rounded-lg p-3">
-                  <p className="text-xs font-semibold text-[var(--color-text)] flex items-center gap-1">
-                    {c.author?.firstName} {c.author?.lastName}
-                    {c.author?.hdmVerified && <VerifiedBadge size={10} />}
-                  </p>
-                  <p className="text-sm text-[var(--color-text)] mt-0.5">{c.content}</p>
-                </div>
-                <div className="flex items-center gap-3 mt-1 text-[10px] text-[var(--color-text-muted)]">
-                  <span>{timeAgo(c.createdAt)}</span>
-                  {(c.author?._id === user?._id || c.author === user?._id) && (
-                    <button onClick={() => handleDeleteComment(c._id)} className="hover:text-[var(--color-accent)]">Delete</button>
-                  )}
-                </div>
+
+        {user ? (
+          <div className="mb-4">
+            <CommentInput
+              onSubmit={handleComment}
+              replyingTo={replyingTo}
+              onCancel={() => setReplyingTo(null)}
+            />
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--color-text-muted)] mb-4">
+            <button onClick={() => navigate('/login')} className="text-[var(--color-primary)] font-semibold">Login</button> to comment.
+          </p>
+        )}
+
+        {loadingComments && comments.length === 0 ? (
+          <div className="flex justify-center py-6"><Spinner size="md" /></div>
+        ) : comments.length === 0 ? (
+          <p className="text-sm text-[var(--color-text-muted)] text-center py-6">No comments yet. Be the first!</p>
+        ) : (
+          <div className="space-y-4">
+            {comments.map(comment => (
+              <div key={comment._id}>
+                <CommentItem
+                  comment={comment}
+                  userReaction={userReactions[comment._id]}
+                  onReply={handleReply}
+                  onDelete={handleDeleteComment}
+                />
+                {comment.replyCount > 0 && comment.replies?.length > 0 && (
+                  <ReplyList
+                    commentId={comment._id}
+                    onReply={handleReply}
+                    onDelete={handleDeleteComment}
+                  />
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+            {hasMoreComments && (
+              <div className="text-center">
+                <Button variant="outline" size="sm" onClick={() => fetchComments(commentPage + 1)} disabled={loadingComments}>
+                  {loadingComments ? 'Loading...' : 'Load More'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
