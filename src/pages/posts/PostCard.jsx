@@ -4,7 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { Badge } from '@/components/ui/Badge';
-import { likePost, repost, deletePost } from '@/api/posts';
+import { ReactionBar } from '@/components/posts/ReactionBar';
+import { repost, deletePost } from '@/api/posts';
 import { timeAgo } from '@/utils/formatDate';
 import { formatCompactNumber } from '@/utils/formatCurrency';
 import toast from 'react-hot-toast';
@@ -12,8 +13,6 @@ import toast from 'react-hot-toast';
 export const PostCard = ({ post, onDelete }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [liked, setLiked] = useState(post.likes?.includes(user?._id));
-  const [likeCount, setLikeCount] = useState(post.likeCount || 0);
   const [reposted, setReposted] = useState(false);
   const [repostCount, setRepostCount] = useState(post.repostCount || 0);
   const [showMenu, setShowMenu] = useState(false);
@@ -21,13 +20,29 @@ export const PostCard = ({ post, onDelete }) => {
 
   const isOwnPost = post.author?._id === user?._id || post.author === user?._id;
 
-  const handleLike = async (e) => { e.stopPropagation(); try { await likePost(post._id); setLiked(!liked); setLikeCount(prev => liked ? prev - 1 : prev + 1); } catch { toast.error('Failed'); } };
-  const handleRepost = async (e) => { e.stopPropagation(); try { await repost(post._id); setReposted(true); setRepostCount(prev => prev + 1); toast.success('Reposted'); } catch { toast.error('Failed'); } };
-  const handleDelete = async (e) => { e.stopPropagation(); if (!confirm('Delete?')) return; try { await deletePost(post._id); toast.success('Deleted'); onDelete?.(post._id); } catch { toast.error('Failed'); } setShowMenu(false); };
+  const handleRepost = async (e) => {
+    e.stopPropagation();
+    try { await repost(post._id); setReposted(true); setRepostCount(prev => prev + 1); toast.success('Reposted'); }
+    catch { toast.error('Failed'); }
+  };
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (!confirm('Delete?')) return;
+    try { await deletePost(post._id); toast.success('Deleted'); onDelete?.(post._id); }
+    catch { toast.error('Failed'); }
+    setShowMenu(false);
+  };
+
   const handleEdit = (e) => { e.stopPropagation(); navigate(`/edit-post/${post._id}`); setShowMenu(false); };
   const handleSave = (e) => { e.stopPropagation(); setSaved(!saved); toast.success(saved ? 'Removed' : 'Saved'); setShowMenu(false); };
-  const handleShare = (e) => { e.stopPropagation(); if (navigator.share) { navigator.share({ title: 'RVNP Post', text: post.content, url: `${window.location.origin}/post/${post._id}` }); } else { navigator.clipboard.writeText(`${window.location.origin}/post/${post._id}`); toast.success('Link copied!'); } setShowMenu(false); };
-  const handleArchive = async (e) => { e.stopPropagation(); try { await likePost(post._id); toast.success('Archived'); } catch { toast.error('Failed'); } setShowMenu(false); };
+  const handleShare = (e) => {
+    e.stopPropagation();
+    if (navigator.share) { navigator.share({ title: 'RVNP Post', text: post.content, url: `${window.location.origin}/post/${post._id}` }); }
+    else { navigator.clipboard.writeText(`${window.location.origin}/post/${post._id}`); toast.success('Link copied!'); }
+    setShowMenu(false);
+  };
+  const handleArchive = async (e) => { e.stopPropagation(); try { await repost(post._id); toast.success('Archived'); } catch { toast.error('Failed'); } setShowMenu(false); };
 
   return (
     <div className={`card ${post.isUrgent ? 'card-urgent' : ''} ${post.type === 'lost_found' ? 'card-lost' : ''} cursor-pointer relative`} onClick={() => navigate(`/post/${post._id}`)}>
@@ -82,16 +97,16 @@ export const PostCard = ({ post, onDelete }) => {
         </div>
       )}
 
-      <div className="flex items-center gap-6 px-4 pb-4 text-sm text-[var(--color-text-secondary)]">
-        <button onClick={handleLike} className={`flex items-center gap-1 hover:text-[var(--color-accent)] transition-colors ${liked ? 'text-[var(--color-accent)] font-bold' : ''}`}>
-          {liked ? '❤️' : '🤍'} <span>{formatCompactNumber(likeCount)}</span>
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post._id}`); }} className="flex items-center gap-1 hover:text-[var(--color-primary)] transition-colors">
-          💬 <span>{formatCompactNumber(post.commentCount || 0)}</span>
-        </button>
-        <button onClick={handleRepost} className={`flex items-center gap-1 hover:text-[var(--color-primary)] transition-colors ${reposted ? 'text-[var(--color-primary)] font-bold' : ''}`}>
-          🔄 <span>{formatCompactNumber(repostCount)}</span>
-        </button>
+      <div className="flex items-center justify-between px-4 pb-4 text-sm">
+        <ReactionBar postId={post._id} />
+        <div className="flex items-center gap-4 text-[var(--color-text-secondary)]">
+          <button onClick={(e) => { e.stopPropagation(); navigate(`/post/${post._id}`); }} className="flex items-center gap-1 hover:text-[var(--color-primary)] transition-colors">
+            💬 <span>{formatCompactNumber(post.commentCount || 0)}</span>
+          </button>
+          <button onClick={handleRepost} className={`flex items-center gap-1 hover:text-[var(--color-primary)] transition-colors ${reposted ? 'text-[var(--color-primary)] font-bold' : ''}`}>
+            🔄 <span>{formatCompactNumber(repostCount)}</span>
+          </button>
+        </div>
       </div>
     </div>
   );
