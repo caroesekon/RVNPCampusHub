@@ -1,0 +1,36 @@
+{
+  "name": "RVNP Campus Hub",
+  "short_name": "RVNP Hub",
+  "description": "All-in-one social interaction app for Rift Valley National Polytechnic",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#006400",
+  "theme_color": "#006400",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

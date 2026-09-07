@@ -23,7 +23,9 @@ export const SocketProvider = ({ children }) => {
     }
 
     const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-    const newSocket = io(socketUrl);
+    const newSocket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+    });
 
     newSocket.on('connect', () => {
       setIsConnected(true);
@@ -43,55 +45,8 @@ export const SocketProvider = ({ children }) => {
     };
   }, [isAuthenticated, user?.id]);
 
-  const joinCampus = (campusId) => {
-    if (socket && isConnected) {
-      socket.emit('join-campus', campusId);
-    }
-  };
-
-  const leaveCampus = (campusId) => {
-    if (socket && isConnected) {
-      socket.emit('leave-campus', campusId);
-    }
-  };
-
-  const joinGroup = (groupId) => {
-    if (socket && isConnected) {
-      socket.emit('join-group', groupId);
-    }
-  };
-
-  const leaveGroup = (groupId) => {
-    if (socket && isConnected) {
-      socket.emit('leave-group', groupId);
-    }
-  };
-
-  const onNotification = (callback) => {
-    if (socket) {
-      socket.on('notification', callback);
-    }
-  };
-
-  const onNewMessage = (callback) => {
-    if (socket) {
-      socket.on('new-message', callback);
-    }
-  };
-
   return (
-    <SocketContext.Provider
-      value={{
-        socket,
-        isConnected,
-        joinCampus,
-        leaveCampus,
-        joinGroup,
-        leaveGroup,
-        onNotification,
-        onNewMessage,
-      }}
-    >
+    <SocketContext.Provider value={{ socket, isConnected }}>
       {children}
     </SocketContext.Provider>
   );

@@ -27,6 +27,9 @@ import Stories from '../pages/Stories.jsx';
 import CreateStory from '../pages/CreateStory.jsx';
 import Followers from '../pages/Followers.jsx';
 import Friends from '../pages/Friends.jsx';
+import HashtagPage from '../pages/HashtagPage.jsx';
+import Leaderboard from '../pages/Leaderboard.jsx';
+import Badges from '../pages/Badges.jsx';
 import NotFound from '../pages/NotFound.jsx';
 
 const AppRoutes = () => {
@@ -58,7 +61,9 @@ const AppRoutes = () => {
       <Route path="/stories/create" element={<ProtectedRoute><CreateStory /></ProtectedRoute>} />
       <Route path="/followers" element={<ProtectedRoute><Followers /></ProtectedRoute>} />
       <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
-
+      <Route path="/hashtags/:name" element={<ProtectedRoute><HashtagPage /></ProtectedRoute>} />
+      <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+      <Route path="/badges" element={<ProtectedRoute><Badges /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -14,6 +14,7 @@ import Dropdown from '../ui/Dropdown.jsx';
 import Modal from '../ui/Modal.jsx';
 import VerifiedBadge from '../ui/VerifiedBadge.jsx';
 import AIContentGenerator from '../ai/AIContentGenerator.jsx';
+import MentionTextarea from '../mentions/MentionTextarea.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useApp } from '../../context/AppContext.jsx';
 import postApi from '../../api/postApi.js';
@@ -72,8 +73,8 @@ const PostComposer = ({ onPostCreated }) => {
       if (response.data.success) {
         setAiEnabled(response.data.data.enabled && response.data.data.contentEnabled);
       }
-    } catch (error) {
-      console.error('Failed to fetch AI status:', error.message);
+    } catch {
+      // Silent
     }
   };
 
@@ -129,8 +130,8 @@ const PostComposer = ({ onPostCreated }) => {
       if (response.data.success) {
         setSearchResults(response.data.data.users || []);
       }
-    } catch (error) {
-      console.error('User search failed:', error.message);
+    } catch {
+      // Silent
     }
   };
 
@@ -207,7 +208,6 @@ const PostComposer = ({ onPostCreated }) => {
 
   return (
     <div className="bg-bg-primary border border-border-color rounded-xl w-full overflow-hidden">
-      {/* Line 1: Avatar + Textarea */}
       <div className="p-3 sm:p-4">
         <div className="flex gap-2 sm:gap-3 w-full">
           <div className="shrink-0">
@@ -215,12 +215,11 @@ const PostComposer = ({ onPostCreated }) => {
           </div>
 
           <div className="flex-1 min-w-0 w-full">
-            <textarea
+            <MentionTextarea
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={setText}
               placeholder={feeling ? `What's on your mind, feeling ${feeling.label}?` : "What's on your mind?"}
               rows={3}
-              maxLength={1000}
               className="w-full max-w-full bg-bg-secondary text-text-primary rounded-lg p-2 sm:p-3 resize-none focus:outline-none placeholder:text-text-muted text-sm sm:text-base box-border"
             />
 
@@ -276,9 +275,7 @@ const PostComposer = ({ onPostCreated }) => {
         </div>
       </div>
 
-      {/* Line 2: Icons (Mobile) / Icons + Privacy + Post (Desktop) */}
       <div className="border-t border-border-color px-2 sm:px-3 py-2">
-        {/* Mobile: Icons only */}
         <div className="flex sm:hidden items-center justify-between w-full">
           <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide flex-1 min-w-0">
             <label className="p-2 rounded-lg hover:bg-bg-secondary text-text-muted cursor-pointer shrink-0" title="Image">
@@ -306,7 +303,6 @@ const PostComposer = ({ onPostCreated }) => {
           </div>
         </div>
 
-        {/* Desktop: Icons + Privacy + Post */}
         <div className="hidden sm:flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
             <label className="p-2 rounded-lg hover:bg-bg-secondary text-text-muted cursor-pointer shrink-0" title="Add Image">
@@ -342,7 +338,6 @@ const PostComposer = ({ onPostCreated }) => {
         </div>
       </div>
 
-      {/* Line 3 (Mobile only): Privacy + Post */}
       <div className="sm:hidden border-t border-border-color px-3 py-2 flex items-center justify-between gap-2">
         <div className="w-28 flex-1">
           <Dropdown options={privacyOptions} value={privacy} onChange={setPrivacy} placeholder="Public" />

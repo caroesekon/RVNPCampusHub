@@ -17,6 +17,7 @@ import Button from '../components/ui/Button.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import Input from '../components/ui/Input.jsx';
 import Dropdown from '../components/ui/Dropdown.jsx';
+import MentionTextarea from '../components/mentions/MentionTextarea.jsx';
 import groupApi from '../api/groupApi.js';
 import uploadApi from '../api/uploadApi.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -39,14 +40,8 @@ const GroupDetails = () => {
   const [postImageFiles, setPostImageFiles] = useState([]);
   const [posting, setPosting] = useState(false);
 
-  // Settings
   const [showSettings, setShowSettings] = useState(false);
-  const [settingsForm, setSettingsForm] = useState({
-    name: '',
-    description: '',
-    category: 'General',
-    privacy: 'PUBLIC',
-  });
+  const [settingsForm, setSettingsForm] = useState({ name: '', description: '', category: 'General', privacy: 'PUBLIC' });
   const [savingSettings, setSavingSettings] = useState(false);
   const [error, setError] = useState('');
 
@@ -72,55 +67,29 @@ const GroupDetails = () => {
           privacy: response.data.data.privacy || 'PUBLIC',
         });
       }
-    } catch (error) {
-      console.error('Failed to load group:', error.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* Silent */ } finally { setLoading(false); }
   };
 
   const fetchMembers = async () => {
     try {
       const response = await groupApi.getGroupMembers(id);
-      if (response.data.success) {
-        setMembers(response.data.data.members || []);
-      }
-    } catch (error) {
-      console.error('Failed to load members:', error.message);
-    }
+      if (response.data.success) setMembers(response.data.data.members || []);
+    } catch { /* Silent */ }
   };
 
   const fetchPosts = async () => {
     try {
       const response = await groupApi.getGroupPosts(id);
-      if (response.data.success) {
-        setPosts(response.data.data.posts || []);
-      }
-    } catch (error) {
-      console.error('Failed to load posts:', error.message);
-    }
+      if (response.data.success) setPosts(response.data.data.posts || []);
+    } catch { /* Silent */ }
   };
 
   const handleJoin = async () => {
-    try {
-      await groupApi.joinGroup(id);
-      setIsMember(true);
-      fetchGroup();
-      fetchMembers();
-    } catch (error) {
-      console.error('Join failed:', error.message);
-    }
+    try { await groupApi.joinGroup(id); setIsMember(true); fetchGroup(); fetchMembers(); } catch { /* Silent */ }
   };
 
   const handleLeave = async () => {
-    try {
-      await groupApi.leaveGroup(id);
-      setIsMember(false);
-      fetchGroup();
-      fetchMembers();
-    } catch (error) {
-      console.error('Leave failed:', error.message);
-    }
+    try { await groupApi.leaveGroup(id); setIsMember(false); fetchGroup(); fetchMembers(); } catch { /* Silent */ }
   };
 
   const handlePostImageSelect = (e) => {
@@ -142,7 +111,6 @@ const GroupDetails = () => {
     if (!postText.trim() && postImageFiles.length === 0) return;
     setPosting(true);
     setError('');
-
     try {
       let uploadedImages = [];
       if (postImageFiles.length > 0) {
@@ -151,12 +119,7 @@ const GroupDetails = () => {
           uploadedImages = uploadResponse.data.data.map((img) => img.url);
         }
       }
-
-      const response = await groupApi.createGroupPost(id, {
-        text: postText.trim(),
-        images: uploadedImages,
-      });
-
+      const response = await groupApi.createGroupPost(id, { text: postText.trim(), images: uploadedImages });
       if (response.data.success) {
         setPostText('');
         setPostImages([]);
@@ -166,42 +129,30 @@ const GroupDetails = () => {
       }
     } catch (error) {
       setError(error.response?.data?.message || 'Post failed');
-    } finally {
-      setPosting(false);
-    }
+    } finally { setPosting(false); }
   };
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       const response = await uploadApi.uploadSingle(file);
       if (response.data.success) {
         await groupApi.updateGroup(id, { avatarUrl: response.data.data.url });
         fetchGroup();
       }
-    } catch (error) {
-      console.error('Avatar upload failed:', error.message);
-    }
+    } catch { /* Silent */ }
   };
 
   const handleSaveSettings = async () => {
     setSavingSettings(true);
     setError('');
-
     try {
       const response = await groupApi.updateGroup(id, settingsForm);
-
-      if (response.data.success) {
-        setShowSettings(false);
-        fetchGroup();
-      }
+      if (response.data.success) { setShowSettings(false); fetchGroup(); }
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to save');
-    } finally {
-      setSavingSettings(false);
-    }
+    } finally { setSavingSettings(false); }
   };
 
   const categoryOptions = [
@@ -221,17 +172,12 @@ const GroupDetails = () => {
   ];
 
   if (loading) {
-    return (
-      <Layout>
-        <div className="flex justify-center py-20"><Spinner size="lg" /></div>
-      </Layout>
-    );
+    return <Layout><div className="flex justify-center py-20"><Spinner size="lg" /></div></Layout>;
   }
 
   return (
     <Layout>
       <div className="w-full">
-        {/* Header */}
         <div className="flex items-center justify-between mb-4 gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <button onClick={() => navigate('/groups')} className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary shrink-0">
@@ -242,19 +188,13 @@ const GroupDetails = () => {
               <h1 className="text-xl sm:text-2xl font-heading font-bold text-text-primary truncate">{group?.name}</h1>
             </div>
           </div>
-
           {isAdmin && (
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary shrink-0"
-              title="Group Settings"
-            >
+            <button onClick={() => setShowSettings(true)} className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary shrink-0" title="Group Settings">
               <IoSettings size={20} />
             </button>
           )}
         </div>
 
-        {/* Group Info */}
         <div className="bg-bg-primary border border-border-color rounded-xl p-4 mb-4">
           {group?.description && <p className="text-text-secondary">{group.description}</p>}
           <div className="flex items-center gap-4 mt-3 text-sm text-text-muted flex-wrap">
@@ -266,25 +206,21 @@ const GroupDetails = () => {
             )}
             {group?.campus && <span>📍 {group.campus.name}</span>}
           </div>
-
           <div className="mt-4">
             {isMember ? (
               !isAdmin && (
                 <Button variant="secondary" size="sm" onClick={handleLeave}>
-                  <IoLogOut className="inline mr-1" size={16} />
-                  Leave Group
+                  <IoLogOut className="inline mr-1" size={16} /> Leave Group
                 </Button>
               )
             ) : (
               <Button size="sm" onClick={handleJoin}>
-                <IoLogIn className="inline mr-1" size={16} />
-                Join Group
+                <IoLogIn className="inline mr-1" size={16} /> Join Group
               </Button>
             )}
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-4 border-b border-border-color">
           <button onClick={() => setActiveTab('posts')} className={`px-4 py-2 font-medium text-sm border-b-2 -mb-px ${activeTab === 'posts' ? 'border-rvnp-green text-rvnp-green' : 'border-transparent text-text-muted'}`}>
             Posts
@@ -294,16 +230,13 @@ const GroupDetails = () => {
           </button>
         </div>
 
-        {/* Posts Tab */}
         {activeTab === 'posts' ? (
           <div className="space-y-3">
             {isMember && (
               <Button size="sm" onClick={() => setShowPostComposer(true)}>
-                <IoAdd className="inline mr-1" size={16} />
-                Post in Group
+                <IoAdd className="inline mr-1" size={16} /> Post in Group
               </Button>
             )}
-
             {posts.length === 0 ? (
               <p className="text-center text-text-muted py-8">No posts yet</p>
             ) : (
@@ -313,20 +246,11 @@ const GroupDetails = () => {
                     <Avatar src={post.user?.avatarUrl} name={post.user?.fullName} size="sm" />
                     <span className="font-medium text-text-primary text-sm">{post.user?.fullName}</span>
                   </div>
-
-                  {post.content?.text && (
-                    <p className="text-text-primary text-sm mb-2">{post.content.text}</p>
-                  )}
-
+                  {post.content?.text && <p className="text-text-primary text-sm mb-2">{post.content.text}</p>}
                   {post.content?.images && post.content.images.length > 0 && (
                     <div className={`grid gap-2 ${post.content.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                       {post.content.images.map((image, index) => (
-                        <img
-                          key={index}
-                          src={image}
-                          alt={`Post ${index + 1}`}
-                          className="w-full rounded-lg object-cover max-h-56"
-                        />
+                        <img key={index} src={image} alt={`Post ${index + 1}`} className="w-full rounded-lg object-cover max-h-56" />
                       ))}
                     </div>
                   )}
@@ -337,17 +261,11 @@ const GroupDetails = () => {
         ) : (
           <div className="space-y-1">
             {members.map((member) => (
-              <button
-                key={member.id}
-                onClick={() => navigate(`/profile/${member.user?.id}`)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bg-secondary transition-all"
-              >
+              <button key={member.id} onClick={() => navigate(`/profile/${member.user?.id}`)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bg-secondary transition-all">
                 <Avatar src={member.user?.avatarUrl} name={member.user?.fullName} size="sm" />
                 <div>
                   <span className="font-medium text-text-primary">{member.user?.fullName}</span>
-                  {member.role === 'ADMIN' && (
-                    <span className="text-xs text-rvnp-green ml-2">Admin</span>
-                  )}
+                  {member.role === 'ADMIN' && <span className="text-xs text-rvnp-green ml-2">Admin</span>}
                 </div>
               </button>
             ))}
@@ -359,17 +277,15 @@ const GroupDetails = () => {
       <Modal isOpen={showPostComposer} onClose={() => setShowPostComposer(false)} title="Post in Group" size="md">
         <div className="space-y-3">
           {error && (
-            <div className="p-3 rounded-lg bg-rvnp-red bg-opacity-10 border border-rvnp-red text-rvnp-red text-sm">
-              {error}
-            </div>
+            <div className="p-3 rounded-lg bg-rvnp-red bg-opacity-10 border border-rvnp-red text-rvnp-red text-sm">{error}</div>
           )}
 
-          <textarea
+          <MentionTextarea
             value={postText}
-            onChange={(e) => setPostText(e.target.value)}
+            onChange={setPostText}
             placeholder="Share something with the group..."
             rows={3}
-            className="w-full bg-bg-secondary text-text-primary rounded-lg p-3 resize-none focus:outline-none"
+            className="w-full bg-bg-secondary text-text-primary rounded-lg p-3 resize-none focus:outline-none placeholder:text-text-muted"
           />
 
           {postImages.length > 0 && (
@@ -377,10 +293,7 @@ const GroupDetails = () => {
               {postImages.map((image, index) => (
                 <div key={index} className="relative">
                   <img src={image} alt="Upload" className="h-16 w-16 object-cover rounded-lg" />
-                  <button
-                    onClick={() => removePostImage(index)}
-                    className="absolute -top-2 -right-2 p-1 rounded-full bg-bg-tertiary text-text-secondary"
-                  >
+                  <button onClick={() => removePostImage(index)} className="absolute -top-2 -right-2 p-1 rounded-full bg-bg-tertiary text-text-secondary">
                     <IoClose size={12} />
                   </button>
                 </div>
@@ -393,10 +306,7 @@ const GroupDetails = () => {
               <IoImage size={20} />
               <input type="file" accept="image/*" multiple className="hidden" onChange={handlePostImageSelect} />
             </label>
-
-            <Button size="sm" onClick={handlePost} loading={posting}>
-              Post
-            </Button>
+            <Button size="sm" onClick={handlePost} loading={posting}>Post</Button>
           </div>
         </div>
       </Modal>
@@ -405,12 +315,9 @@ const GroupDetails = () => {
       <Modal isOpen={showSettings} onClose={() => setShowSettings(false)} title="Group Settings" size="md">
         <div className="space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-rvnp-red bg-opacity-10 border border-rvnp-red text-rvnp-red text-sm">
-              {error}
-            </div>
+            <div className="p-3 rounded-lg bg-rvnp-red bg-opacity-10 border border-rvnp-red text-rvnp-red text-sm">{error}</div>
           )}
 
-          {/* Group Avatar */}
           <div className="flex items-center gap-3">
             <div onClick={() => avatarInputRef.current?.click()} className="cursor-pointer relative">
               <Avatar src={group?.avatarUrl} name={group?.name} size="xl" />
@@ -425,35 +332,12 @@ const GroupDetails = () => {
             <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </div>
 
-          <Input
-            label="Group Name"
-            value={settingsForm.name}
-            onChange={(e) => setSettingsForm({ ...settingsForm, name: e.target.value })}
-          />
+          <Input label="Group Name" value={settingsForm.name} onChange={(e) => setSettingsForm({ ...settingsForm, name: e.target.value })} />
+          <Input label="Description" value={settingsForm.description} onChange={(e) => setSettingsForm({ ...settingsForm, description: e.target.value })} />
+          <Dropdown label="Category" options={categoryOptions} value={settingsForm.category} onChange={(value) => setSettingsForm({ ...settingsForm, category: value })} />
+          <Dropdown label="Privacy" options={privacyOptions} value={settingsForm.privacy} onChange={(value) => setSettingsForm({ ...settingsForm, privacy: value })} />
 
-          <Input
-            label="Description"
-            value={settingsForm.description}
-            onChange={(e) => setSettingsForm({ ...settingsForm, description: e.target.value })}
-          />
-
-          <Dropdown
-            label="Category"
-            options={categoryOptions}
-            value={settingsForm.category}
-            onChange={(value) => setSettingsForm({ ...settingsForm, category: value })}
-          />
-
-          <Dropdown
-            label="Privacy"
-            options={privacyOptions}
-            value={settingsForm.privacy}
-            onChange={(value) => setSettingsForm({ ...settingsForm, privacy: value })}
-          />
-
-          <Button fullWidth onClick={handleSaveSettings} loading={savingSettings}>
-            Save Changes
-          </Button>
+          <Button fullWidth onClick={handleSaveSettings} loading={savingSettings}>Save Changes</Button>
         </div>
       </Modal>
     </Layout>

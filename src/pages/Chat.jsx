@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IoArrowBack, IoSend, IoCheckmark, IoCheckmarkDone, IoSparkles } from 'react-icons/io5';
+import {
+  IoArrowBack,
+  IoSend,
+  IoCheckmark,
+  IoCheckmarkDone,
+  IoSparkles,
+} from 'react-icons/io5';
 import Layout from '../components/layout/Layout.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
 import Avatar from '../components/ui/Avatar.jsx';
 import VerifiedBadge from '../components/ui/VerifiedBadge.jsx';
+import MentionTextarea from '../components/mentions/MentionTextarea.jsx';
 import messageApi from '../api/messageApi.js';
 import aiApi from '../api/aiApi.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -24,6 +31,7 @@ const Chat = () => {
   const [sending, setSending] = useState(false);
   const [isAIChat, setIsAIChat] = useState(false);
   const [aiStatus, setAiStatus] = useState(null);
+  const [aiTyping, setAiTyping] = useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -48,6 +56,7 @@ const Chat = () => {
         }
       });
     }
+
     return () => {
       socket?.off('new-message');
     };
@@ -59,8 +68,8 @@ const Chat = () => {
       if (response.data.success) {
         setAiStatus(response.data.data);
       }
-    } catch (error) {
-      console.error('Failed to fetch AI status:', error.message);
+    } catch {
+      // Silent
     }
   };
 
@@ -70,7 +79,7 @@ const Chat = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, aiTyping]);
 
   const fetchConversation = async () => {
     try {
@@ -78,8 +87,8 @@ const Chat = () => {
       if (response.data.success) {
         setConversation(response.data.data);
       }
-    } catch (error) {
-      console.error('Failed to load conversation:', error.message);
+    } catch {
+      // Silent
     }
   };
 
@@ -90,8 +99,8 @@ const Chat = () => {
       if (response.data.success) {
         setMessages(response.data.data.messages || []);
       }
-    } catch (error) {
-      console.error('Failed to load messages:', error.message);
+    } catch {
+      // Silent
     } finally {
       setLoading(false);
     }
@@ -112,8 +121,10 @@ const Chat = () => {
         };
         setMessages((prev) => [...prev, userMessage]);
         setNewMessage('');
+        setAiTyping(true);
 
         const response = await aiApi.chat(newMessage.trim());
+
         if (response.data.success) {
           const aiMessage = {
             id: (Date.now() + 1).toString(),
@@ -129,23 +140,19 @@ const Chat = () => {
           content: { text: newMessage.trim() },
           type: 'TEXT',
         });
+
         if (response.data.success) {
           setMessages((prev) => [...prev, response.data.data]);
         }
       }
+
       setNewMessage('');
       scrollToBottom();
-    } catch (error) {
-      console.error('Failed to send:', error.message);
+    } catch {
+      // Silent
     } finally {
+      setAiTyping(false);
       setSending(false);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
     }
   };
 
@@ -156,13 +163,19 @@ const Chat = () => {
     return <IoCheckmark size={16} className="text-text-muted" />;
   };
 
-  const otherUser = conversation?.participants?.find((p) => p.user?.id !== user?.id)?.user;
+  const otherUser = conversation?.participants?.find(
+    (p) => p.user?.id !== user?.id
+  )?.user;
 
   return (
     <Layout>
       <div className="w-full flex flex-col h-[calc(100vh-10rem)] lg:h-[calc(100vh-7rem)]">
-        <div className="flex items-center gap-3 p-3 border-b border-border-color">
-          <button onClick={() => navigate('/messages')} className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary lg:hidden">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-3 border-b border-border-color shrink-0">
+          <button
+            onClick={() => navigate('/messages')}
+            className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary lg:hidden"
+          >
             <IoArrowBack size={20} />
           </button>
 
@@ -171,11 +184,14 @@ const Chat = () => {
               <Avatar src={aiStatus?.avatarUrl} name={aiStatus?.name} size="sm" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  <h2 className="font-medium text-text-primary truncate">{aiStatus?.name || 'HDM AI'}</h2>
+                  <h2 className="font-medium text-text-primary truncate">
+                    {aiStatus?.name || 'HDM AI'}
+                  </h2>
                   <VerifiedBadge size={12} />
                 </div>
                 <span className="text-xs text-rvnp-green flex items-center gap-1">
-                  <IoSparkles size={10} /> AI Assistant • Always Online
+                  <IoSparkles size={10} />
+                  AI Assistant • Always Online
                 </span>
               </div>
             </>
@@ -184,29 +200,69 @@ const Chat = () => {
               <Avatar src={otherUser?.avatarUrl} name={otherUser?.fullName} size="sm" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  <h2 className="font-medium text-text-primary truncate">{otherUser?.fullName}</h2>
+                  <h2 className="font-medium text-text-primary truncate">
+                    {otherUser?.fullName}
+                  </h2>
                   {otherUser?.hdmVerified && <VerifiedBadge size={12} />}
                 </div>
-                {isConnected && <span className="text-xs text-rvnp-green">Online</span>}
+                {isConnected && (
+                  <span className="text-xs text-rvnp-green">Online</span>
+                )}
               </div>
             </>
           )}
         </div>
 
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {loading ? (
-            <div className="flex justify-center py-10"><Spinner size="md" /></div>
-          ) : messages.length === 0 ? (
+            <div className="flex justify-center py-10">
+              <Spinner size="md" />
+            </div>
+          ) : messages.length === 0 && !aiTyping ? (
             <div className="text-center text-text-muted py-10">
               {isAIChat ? 'Ask HDM AI anything!' : 'No messages yet. Say hello!'}
             </div>
           ) : (
             messages.map((message) => (
-              <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] sm:max-w-[70%] px-4 py-2 rounded-2xl relative ${message.senderId === user?.id ? 'bg-rvnp-green text-rvnp-white rounded-br-sm' : 'bg-bg-tertiary text-text-primary rounded-bl-sm'}`}>
-                  <p className="text-sm sm:text-base whitespace-pre-wrap break-words pr-5">{message.content?.text}</p>
+              <div
+                key={message.id}
+                className={`flex ${
+                  message.senderId === user?.id
+                    ? 'justify-end'
+                    : message.senderId === 'ai'
+                    ? 'justify-start'
+                    : 'justify-start'
+                }`}
+              >
+                {message.senderId !== user?.id && (
+                  <div className="mr-2 shrink-0">
+                    {message.senderId === 'ai' ? (
+                      <Avatar src={aiStatus?.avatarUrl} name={aiStatus?.name} size="sm" />
+                    ) : (
+                      <Avatar src={otherUser?.avatarUrl} name={otherUser?.fullName} size="sm" />
+                    )}
+                  </div>
+                )}
+
+                <div
+                  className={`max-w-[80%] sm:max-w-[70%] px-4 py-2 rounded-2xl relative ${
+                    message.senderId === user?.id
+                      ? 'bg-rvnp-green text-rvnp-white rounded-br-sm'
+                      : 'bg-bg-tertiary text-text-primary rounded-bl-sm'
+                  }`}
+                >
+                  <p className="text-sm sm:text-base whitespace-pre-wrap break-words pr-5">
+                    {message.content?.text}
+                  </p>
                   <div className="flex items-center gap-1 justify-end mt-1">
-                    <span className={`text-xs ${message.senderId === user?.id ? 'text-rvnp-white opacity-70' : 'text-text-muted'}`}>
+                    <span
+                      className={`text-xs ${
+                        message.senderId === user?.id
+                          ? 'text-rvnp-white opacity-70'
+                          : 'text-text-muted'
+                      }`}
+                    >
                       {formatMessageTime(message.createdAt)}
                     </span>
                     {getTickIcon(message)}
@@ -215,13 +271,50 @@ const Chat = () => {
               </div>
             ))
           )}
+
+          {/* AI Typing Dots */}
+          {aiTyping && (
+            <div className="flex justify-start">
+              <div className="mr-2 shrink-0">
+                <Avatar src={aiStatus?.avatarUrl} name={aiStatus?.name} size="sm" />
+              </div>
+              <div className="bg-bg-tertiary text-text-primary rounded-2xl rounded-bl-sm px-4 py-3">
+                <span className="flex gap-1">
+                  <span
+                    className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce"
+                    style={{ animationDelay: '0ms' }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce"
+                    style={{ animationDelay: '150ms' }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce"
+                    style={{ animationDelay: '300ms' }}
+                  />
+                </span>
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-3 border-t border-border-color">
+        {/* Input */}
+        <div className="p-3 border-t border-border-color shrink-0">
           <div className="flex items-end gap-2">
-            <textarea value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyPress={handleKeyPress} placeholder={isAIChat ? 'Ask HDM AI...' : 'Type a message...'} rows={1} className="flex-1 bg-bg-secondary text-text-primary rounded-lg p-2 sm:p-3 resize-none focus:outline-none placeholder:text-text-muted text-sm sm:text-base" />
-            <button onClick={handleSend} disabled={!newMessage.trim() || sending} className="p-2.5 rounded-full bg-rvnp-green text-rvnp-white hover:bg-rvnp-green-light disabled:opacity-50 shrink-0">
+            <MentionTextarea
+              value={newMessage}
+              onChange={setNewMessage}
+              placeholder={isAIChat ? 'Ask HDM AI...' : 'Type a message...'}
+              rows={1}
+              className="flex-1 bg-bg-secondary text-text-primary rounded-lg p-2 sm:p-3 resize-none focus:outline-none placeholder:text-text-muted text-sm sm:text-base"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!newMessage.trim() || sending}
+              className="p-2.5 rounded-full bg-rvnp-green text-rvnp-white hover:bg-rvnp-green-light disabled:opacity-50 shrink-0"
+            >
               <IoSend size={18} />
             </button>
           </div>

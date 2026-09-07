@@ -11,6 +11,7 @@ const AIContentGenerator = ({ isOpen, onClose, onInsert }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [aiEnabled, setAiEnabled] = useState(false);
+  const [typing, setTyping] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -21,18 +22,16 @@ const AIContentGenerator = ({ isOpen, onClose, onInsert }) => {
   const checkAIStatus = async () => {
     try {
       const response = await aiApi.getStatus();
-
       if (response.data.success) {
         setAiEnabled(
           response.data.data.enabled &&
           response.data.data.contentEnabled
         );
-
         if (!response.data.data.enabled || !response.data.data.contentEnabled) {
           setError('AI content generation is disabled by admin');
         }
       }
-    } catch (error) {
+    } catch {
       setAiEnabled(false);
       setError('Failed to check AI status');
     }
@@ -42,6 +41,7 @@ const AIContentGenerator = ({ isOpen, onClose, onInsert }) => {
     if (!prompt.trim() || !aiEnabled) return;
 
     setLoading(true);
+    setTyping(true);
     setError('');
     setContent('');
 
@@ -55,6 +55,7 @@ const AIContentGenerator = ({ isOpen, onClose, onInsert }) => {
       setError(error.response?.data?.message || 'AI generation failed');
     } finally {
       setLoading(false);
+      setTyping(false);
     }
   };
 
@@ -93,6 +94,20 @@ const AIContentGenerator = ({ isOpen, onClose, onInsert }) => {
               <IoSparkles className="inline mr-1" size={16} />
               Generate
             </Button>
+
+            {typing && (
+              <div className="bg-bg-secondary rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-text-muted">HDM AI is thinking</span>
+                  {/* 3 Bouncing Dots */}
+                  <span className="flex gap-1">
+                    <span className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </span>
+                </div>
+              </div>
+            )}
 
             {content && (
               <div className="bg-bg-secondary rounded-lg p-4">

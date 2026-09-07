@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout.jsx';
 import StoriesBar from '../components/stories/StoriesBar.jsx';
+import TrendingChips from '../components/hashtags/TrendingChips.jsx';
 import PostComposer from '../components/posts/PostComposer.jsx';
 import PostCard from '../components/posts/PostCard.jsx';
 import ReelsRow from '../components/reels/ReelsRow.jsx';
@@ -88,16 +89,41 @@ const Feed = () => {
     setPosts((prev) => [newPost, ...prev]);
   };
 
+  const handleLike = async (postId) => {
+    try {
+      await postApi.reactToPost(postId, 'LIKE');
+    } catch (error) {
+      console.error('Like failed:', error.message);
+    }
+  };
+
+  const handleUnlike = async (postId) => {
+    try {
+      await postApi.removeReaction(postId);
+    } catch (error) {
+      console.error('Unlike failed:', error.message);
+    }
+  };
+
+  const handleShare = async (postId) => {
+    try {
+      await postApi.sharePost(postId);
+    } catch (error) {
+      console.error('Share failed:', error.message);
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-4 w-full">
         <StoriesBar />
 
+        <TrendingChips />
+
         <PostComposer onPostCreated={handlePostCreated} />
 
         <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-        {/* Reels Row - Below tabs, only on "All Posts" */}
         {activeTab === 'all' && reels.length > 0 && (
           <ReelsRow reels={reels} />
         )}
@@ -114,7 +140,13 @@ const Feed = () => {
         ) : (
           <div className="space-y-4 w-full">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={handleLike}
+                onUnlike={handleUnlike}
+                onShare={handleShare}
+              />
             ))}
 
             {loadingMore && (

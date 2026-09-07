@@ -1,8 +1,10 @@
 import axios from 'axios';
 import storage from '../utils/storage.js';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: API_URL,
   timeout: 30000,
 });
 
@@ -32,7 +34,7 @@ axiosInstance.interceptors.response.use(
       if (refreshToken) {
         try {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/refresh-token`,
+            `${API_URL}/auth/refresh-token`,
             { refreshToken }
           );
 
@@ -45,10 +47,10 @@ axiosInstance.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return axiosInstance(originalRequest);
           }
-        } catch (refreshError) {
+        } catch {
           storage.clearAll();
           window.location.href = '/login';
-          return Promise.reject(refreshError);
+          return Promise.reject(error);
         }
       }
 

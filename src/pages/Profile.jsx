@@ -23,7 +23,9 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [loadingReels, setLoadingReels] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [uploadType, setUploadType] = useState('');
 
   const userId = id || currentUser?.id;
   const isOwnProfile = currentUser?.id === userId;
@@ -110,11 +112,16 @@ const Profile = () => {
 
   const handleCoverChange = async (file) => {
     setUploading(true);
+    setUploadType('cover');
+    setUploadProgress(0);
 
     try {
-      const response = await uploadApi.uploadSingle(file);
+      const response = await uploadApi.uploadSingle(file, (percent) => {
+        setUploadProgress(percent);
+      });
 
       if (response.data.success) {
+        setUploadProgress(100);
         const coverUrl = response.data.data.url;
         await userApi.updateProfile({ coverUrl });
 
@@ -127,17 +134,26 @@ const Profile = () => {
     } catch (error) {
       console.error('Cover upload failed:', error.message);
     } finally {
-      setUploading(false);
+      setTimeout(() => {
+        setUploading(false);
+        setUploadType('');
+        setUploadProgress(0);
+      }, 1000);
     }
   };
 
   const handleAvatarChange = async (file) => {
     setUploading(true);
+    setUploadType('avatar');
+    setUploadProgress(0);
 
     try {
-      const response = await uploadApi.uploadSingle(file);
+      const response = await uploadApi.uploadSingle(file, (percent) => {
+        setUploadProgress(percent);
+      });
 
       if (response.data.success) {
+        setUploadProgress(100);
         const avatarUrl = response.data.data.url;
         await userApi.updateProfile({ avatarUrl });
 
@@ -150,7 +166,11 @@ const Profile = () => {
     } catch (error) {
       console.error('Avatar upload failed:', error.message);
     } finally {
-      setUploading(false);
+      setTimeout(() => {
+        setUploading(false);
+        setUploadType('');
+        setUploadProgress(0);
+      }, 1000);
     }
   };
 
@@ -167,6 +187,26 @@ const Profile = () => {
   return (
     <Layout>
       <div className="w-full">
+        {/* Upload Progress Bar */}
+        {uploading && (
+          <div className="bg-bg-primary border border-rvnp-green rounded-xl p-3 mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-text-primary">
+                Uploading {uploadType}...
+              </span>
+              <span className="text-sm font-semibold text-rvnp-green">
+                {uploadProgress}%
+              </span>
+            </div>
+            <div className="w-full h-2 bg-bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full bg-rvnp-green transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <ProfileHeader
           user={user}
           isFollowing={isFollowing}
@@ -207,6 +247,10 @@ const Profile = () => {
                   )}
                   <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black to-transparent">
                     <p className="text-white text-xs truncate">{reel.caption || 'Reel'}</p>
+                    <div className="flex items-center gap-2 mt-1 text-white text-xs">
+                      <span>▶ {reel.viewCount || 0}</span>
+                      <span>❤️ {reel.likeCount || 0}</span>
+                    </div>
                   </div>
                 </div>
               ))}

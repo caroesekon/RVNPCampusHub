@@ -1,6 +1,6 @@
 import axiosInstance from './axios.js';
 
-const uploadSingle = (file) => {
+const uploadSingle = (file, onProgress = null) => {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -8,10 +8,16 @@ const uploadSingle = (file) => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress && progressEvent.total) {
+        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(percent);
+      }
+    },
   });
 };
 
-const uploadMultiple = (files) => {
+const uploadMultiple = (files, onProgress = null) => {
   const formData = new FormData();
 
   files.forEach((file) => {
@@ -21,6 +27,12 @@ const uploadMultiple = (files) => {
   return axiosInstance.post('/upload/multiple', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
+    },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress && progressEvent.total) {
+        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(percent);
+      }
     },
   });
 };

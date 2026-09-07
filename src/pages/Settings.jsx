@@ -16,7 +16,9 @@ const Settings = () => {
   const { user: authUser, refreshUser, logout } = useAuth();
   const avatarInputRef = useRef(null);
 
-  const [user, setUser] = useState(authUser || storage.getUser());
+  const [user, setUser] = useState(() => {
+    return authUser || storage.getUser() || null;
+  });
 
   const [form, setForm] = useState({
     fullName: user?.fullName || '',
@@ -26,6 +28,9 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [uploadType, setUploadType] = useState('');
 
   useEffect(() => {
     const storedUser = storage.getUser();
@@ -53,7 +58,6 @@ const Settings = () => {
 
       if (response.data.success) {
         const updatedUser = await refreshUser();
-
         if (updatedUser) {
           setUser(updatedUser);
           setSuccess('Profile updated successfully');
@@ -74,55 +78,67 @@ const Settings = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setLoading(true);
+    setUploading(true);
+    setUploadType('avatar');
+    setUploadProgress(0);
     setError('');
     setSuccess('');
 
     try {
-      const response = await uploadApi.uploadSingle(file);
+      const response = await uploadApi.uploadSingle(file, (percent) => {
+        setUploadProgress(percent);
+      });
 
       if (response.data.success) {
+        setUploadProgress(100);
         const avatarUrl = response.data.data.url;
-
         await userApi.updateProfile({ avatarUrl });
         const updatedUser = await refreshUser();
-
         if (updatedUser) {
           setUser(updatedUser);
+          storage.setUser(updatedUser);
           setSuccess('Profile picture updated');
         }
       }
     } catch (error) {
       setError('Profile picture upload failed');
     } finally {
-      setLoading(false);
+      setUploading(false);
+      setUploadType('');
+      setTimeout(() => setUploadProgress(0), 2000);
       e.target.value = '';
     }
   };
 
   const handleCoverUpload = async (file) => {
-    setLoading(true);
+    setUploading(true);
+    setUploadType('cover');
+    setUploadProgress(0);
     setError('');
     setSuccess('');
 
     try {
-      const response = await uploadApi.uploadSingle(file);
+      const response = await uploadApi.uploadSingle(file, (percent) => {
+        setUploadProgress(percent);
+      });
 
       if (response.data.success) {
+        setUploadProgress(100);
         const coverUrl = response.data.data.url;
-
         await userApi.updateProfile({ coverUrl });
         const updatedUser = await refreshUser();
-
         if (updatedUser) {
           setUser(updatedUser);
+          storage.setUser(updatedUser);
           setSuccess('Cover photo updated');
         }
       }
     } catch (error) {
       setError('Cover photo upload failed');
     } finally {
-      setLoading(false);
+      setUploading(false);
+      setUploadType('');
+      setTimeout(() => setUploadProgress(0), 2000);
     }
   };
 
@@ -134,16 +150,30 @@ const Settings = () => {
   return (
     <Layout>
       <div className="w-full space-y-4">
-        <h1 className="text-2xl font-heading font-bold text-text-primary">
-          Settings
-        </h1>
+        <h1 className="text-2xl font-heading font-bold text-text-primary">Settings</h1>
+
+        {/* Upload Progress Bar */}
+        {uploading && (
+          <div className="bg-bg-primary border border-rvnp-green rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-text-primary">
+                Uploading {uploadType}...
+              </span>
+              <span className="text-sm font-semibold text-rvnp-green">
+                {uploadProgress}%
+              </span>
+            </div>
+            <div className="w-full h-2 bg-bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full bg-rvnp-green transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="bg-bg-primary border border-border-color rounded-xl overflow-hidden">
-          <CoverPhoto
-            src={user?.coverUrl}
-            editable
-            onImageSelect={handleCoverUpload}
-          />
+          <CoverPhoto src={user?.coverUrl} editable onImageSelect={handleCoverUpload} />
 
           <div className="p-4 sm:p-6">
             <div className="relative -mt-14 sm:-mt-16 mb-4 z-10">
@@ -151,11 +181,7 @@ const Settings = () => {
                 className="inline-block rounded-full border-4 border-bg-primary cursor-pointer relative"
                 onClick={handleAvatarClick}
               >
-                <Avatar
-                  src={user?.avatarUrl}
-                  name={user?.fullName}
-                  size="xl"
-                />
+                <Avatar src={user?.avatarUrl} name={user?.fullName} size="xl" />
 
                 <span className="absolute bottom-1 right-1 p-2 rounded-full bg-bg-tertiary border border-border-color text-text-secondary shadow-lg">
                   <IoCamera size={16} />
@@ -171,9 +197,7 @@ const Settings = () => {
               />
             </div>
 
-            <p className="text-xs text-text-muted mb-4">
-              Click on the profile picture to change it
-            </p>
+            <p className="text-xs text-text-muted mb-4">Click on profile picture to change it</p>
 
             <div className="space-y-4">
               {error && (
@@ -188,60 +212,29 @@ const Settings = () => {
                 </div>
               )}
 
-              <Input
-                label="Full Name"
-                name="fullName"
-                value={form.fullName}
-                onChange={handleChange}
-              />
-
-              <Input
-                label="Bio"
-                name="bio"
-                value={form.bio}
-                onChange={handleChange}
-                placeholder="Tell us about yourself"
-              />
-
-              <Input
-                label="Course"
-                name="course"
-                value={form.course}
-                onChange={handleChange}
-              />
+              <Input label="Full Name" name="fullName" value={form.fullName} onChange={handleChange} />
+              <Input label="Bio" name="bio" value={form.bio} onChange={handleChange} placeholder="Tell us about yourself" />
+              <Input label="Course" name="course" value={form.course} onChange={handleChange} />
 
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleSave} loading={loading}>
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={() => navigate(-1)}>
-                  Cancel
-                </Button>
+                <Button onClick={handleSave} loading={loading}>Save Changes</Button>
+                <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
               </div>
             </div>
           </div>
         </div>
 
-        <Link
-          to="/privacy"
-          className="flex items-center justify-between p-4 bg-bg-primary border border-border-color rounded-xl hover:bg-bg-secondary transition-all"
-        >
+        <Link to="/privacy" className="flex items-center justify-between p-4 bg-bg-primary border border-border-color rounded-xl hover:bg-bg-secondary transition-all">
           <div>
             <h3 className="font-medium text-text-primary">Privacy Settings</h3>
-            <p className="text-xs text-text-muted mt-0.5">
-              Control who can see your content and interact with you
-            </p>
+            <p className="text-xs text-text-muted mt-0.5">Control who can see your content</p>
           </div>
           <IoChevronForward size={20} className="text-text-muted shrink-0" />
         </Link>
 
         <div className="p-4 bg-bg-primary border border-rvnp-red rounded-xl">
-          <h3 className="text-lg font-heading font-semibold text-text-primary mb-2">
-            Danger Zone
-          </h3>
-          <Button variant="danger" onClick={handleLogout}>
-            Logout
-          </Button>
+          <h3 className="text-lg font-heading font-semibold text-text-primary mb-2">Danger Zone</h3>
+          <Button variant="danger" onClick={handleLogout}>Logout</Button>
         </div>
       </div>
     </Layout>
