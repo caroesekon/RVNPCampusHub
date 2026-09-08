@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { IoImage, IoClose } from 'react-icons/io5';
 import Layout from '../components/layout/Layout.jsx';
 import Button from '../components/ui/Button.jsx';
-import Spinner from '../components/ui/Spinner.jsx';
 import storyApi from '../api/storyApi.js';
 import uploadApi from '../api/uploadApi.js';
 
@@ -14,26 +13,36 @@ const CreateStory = () => {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       setImage(file);
       setPreview(URL.createObjectURL(file));
+      setError('');
     }
   };
 
   const handleSubmit = async () => {
-    if (!image && !text.trim()) return;
+    if (!image && !text.trim()) {
+      setError('Please add an image or text');
+      return;
+    }
 
     setLoading(true);
+    setUploading(true);
     setError('');
+    setUploadProgress(0);
 
     try {
       let content = { text: text.trim() };
 
       if (image) {
-        const response = await uploadApi.uploadSingle(image);
+        const response = await uploadApi.uploadSingle(image, (percent) => {
+          setUploadProgress(percent);
+        });
 
         if (response.data.success) {
           content = {
@@ -41,6 +50,9 @@ const CreateStory = () => {
             imageUrl: response.data.data.url,
             text: text.trim(),
           };
+          setUploadProgress(100);
+        } else {
+          throw new Error(response.data.message || 'Image upload failed');
         }
       }
 
@@ -51,11 +63,14 @@ const CreateStory = () => {
 
       if (storyResponse.data.success) {
         navigate('/feed');
+      } else {
+        setError(storyResponse.data.message || 'Story creation failed');
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Story creation failed');
+      setError(error.response?.data?.message || error.message || 'Story creation failed');
     } finally {
       setLoading(false);
+      setUploading(false);
     }
   };
 
@@ -66,9 +81,24 @@ const CreateStory = () => {
           Create Story
         </h1>
 
+        {uploading && (
+          <div className="bg-bg-primary border border-rvnp-green rounded-xl p-3 mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-text-primary">Uploading...</span>
+              <span className="text-sm font-semibold text-rvnp-green">{uploadProgress}%</span>
+            </div>
+            <div className="w-full h-2 bg-bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full bg-rvnp-green transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="bg-bg-primary border border-border-color rounded-xl p-4 space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-red-500 bg-opacity-10 border border-red-500 text-red-500 text-sm">
+            <div className="p-3 rounded-lg bg-rvnp-red bg-opacity-10 border border-rvnp-red text-rvnp-red text-sm">
               {error}
             </div>
           )}
@@ -77,10 +107,7 @@ const CreateStory = () => {
             <div className="relative">
               <img src={preview} alt="Story" className="w-full rounded-lg max-h-96 object-cover" />
               <button
-                onClick={() => {
-                  setImage(null);
-                  setPreview(null);
-                }}
+                onClick={() => { setImage(null); setPreview(null); }}
                 className="absolute top-2 right-2 p-1 rounded-full bg-black bg-opacity-50 text-white"
               >
                 <IoClose size={20} />
@@ -108,7 +135,7 @@ const CreateStory = () => {
           />
 
           <Button fullWidth onClick={handleSubmit} loading={loading}>
-            Share Story
+            {uploading ? `Uploading... ${uploadProgress}%` : 'Share Story'}
           </Button>
         </div>
       </div>
