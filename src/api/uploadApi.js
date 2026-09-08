@@ -8,6 +8,7 @@ const uploadSingle = (file, onProgress = null) => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    timeout: 300000, // 5 minutes for uploads
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
         const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -28,6 +29,7 @@ const uploadMultiple = (files, onProgress = null) => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    timeout: 300000, // 5 minutes for uploads
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
         const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
