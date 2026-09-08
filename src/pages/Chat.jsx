@@ -38,12 +38,14 @@ const Chat = () => {
   useEffect(() => {
     if (conversationId === 'ai') {
       setIsAIChat(true);
-      fetchAIStatus();
       setLoading(false);
-    } else {
+      fetchAIStatus();
+    } else if (conversationId) {
       setIsAIChat(false);
       fetchConversation();
       fetchMessages();
+    } else {
+      navigate('/messages');
     }
   }, [conversationId]);
 
@@ -82,9 +84,12 @@ const Chat = () => {
   }, [messages, aiTyping]);
 
   const fetchConversation = async () => {
+    if (!conversationId || conversationId === 'ai') return;
+
     try {
       const response = await messageApi.getConversationById(conversationId);
-      if (response.data.success) {
+
+      if (response.data.success && response.data.data) {
         setConversation(response.data.data);
       }
     } catch {
@@ -93,9 +98,12 @@ const Chat = () => {
   };
 
   const fetchMessages = async () => {
+    if (!conversationId || conversationId === 'ai') return;
+
     setLoading(true);
     try {
       const response = await messageApi.getMessages(conversationId);
+
       if (response.data.success) {
         setMessages(response.data.data.messages || []);
       }
@@ -201,7 +209,7 @@ const Chat = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   <h2 className="font-medium text-text-primary truncate">
-                    {otherUser?.fullName}
+                    {otherUser?.fullName || 'Chat'}
                   </h2>
                   {otherUser?.hdmVerified && <VerifiedBadge size={12} />}
                 </div>
@@ -215,7 +223,7 @@ const Chat = () => {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {loading ? (
+          {loading && !isAIChat ? (
             <div className="flex justify-center py-10">
               <Spinner size="md" />
             </div>
@@ -230,8 +238,6 @@ const Chat = () => {
                 className={`flex ${
                   message.senderId === user?.id
                     ? 'justify-end'
-                    : message.senderId === 'ai'
-                    ? 'justify-start'
                     : 'justify-start'
                 }`}
               >
@@ -280,18 +286,9 @@ const Chat = () => {
               </div>
               <div className="bg-bg-tertiary text-text-primary rounded-2xl rounded-bl-sm px-4 py-3">
                 <span className="flex gap-1">
-                  <span
-                    className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce"
-                    style={{ animationDelay: '0ms' }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce"
-                    style={{ animationDelay: '150ms' }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce"
-                    style={{ animationDelay: '300ms' }}
-                  />
+                  <span className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-rvnp-green rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </span>
               </div>
             </div>
