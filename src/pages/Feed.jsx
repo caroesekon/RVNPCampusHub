@@ -33,12 +33,11 @@ const Feed = () => {
   const fetchReels = async () => {
     try {
       const response = await feedApi.getFeedReels(8);
-
       if (response.data.success) {
         setReels(response.data.data.reels || []);
       }
-    } catch (error) {
-      console.error('Failed to load reels:', error.message);
+    } catch {
+      // Silent
     }
   };
 
@@ -71,8 +70,8 @@ const Feed = () => {
         setHasMore(pageNum * 20 < total);
         setPage(pageNum);
       }
-    } catch (error) {
-      console.error('Failed to load feed:', error.message);
+    } catch {
+      // Silent
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -87,30 +86,6 @@ const Feed = () => {
 
   const handlePostCreated = (newPost) => {
     setPosts((prev) => [newPost, ...prev]);
-  };
-
-  const handleLike = async (postId) => {
-    try {
-      await postApi.reactToPost(postId, 'LIKE');
-    } catch (error) {
-      console.error('Like failed:', error.message);
-    }
-  };
-
-  const handleUnlike = async (postId) => {
-    try {
-      await postApi.removeReaction(postId);
-    } catch (error) {
-      console.error('Unlike failed:', error.message);
-    }
-  };
-
-  const handleShare = async (postId) => {
-    try {
-      await postApi.sharePost(postId);
-    } catch (error) {
-      console.error('Share failed:', error.message);
-    }
   };
 
   return (
@@ -140,13 +115,7 @@ const Feed = () => {
         ) : (
           <div className="space-y-4 w-full">
             {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onLike={handleLike}
-                onUnlike={handleUnlike}
-                onShare={handleShare}
-              />
+              <PostCard key={post.id} post={post} />
             ))}
 
             {loadingMore && (

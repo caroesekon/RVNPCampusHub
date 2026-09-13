@@ -50,6 +50,7 @@ const Register = () => {
     { value: 'STUDENT', label: '🎓 Student' },
     { value: 'STAFF', label: '👨‍🏫 Staff / Lecturer' },
     { value: 'ALUMNI', label: '🎓 Alumni' },
+    { value: 'GUEST', label: '👤 Guest' },
   ];
 
   const fetchDepartments = async (campusId) => {
@@ -91,18 +92,22 @@ const Register = () => {
     if (!isValidEmail(form.email)) newErrors.email = 'Enter a valid email';
     if (!isValidPhone(form.phoneNumber)) newErrors.phoneNumber = 'Enter a valid phone number';
     if (!isValidPassword(form.password)) newErrors.password = 'Password must be at least 8 characters';
+
     if (selectedRole === 'STUDENT') {
       if (!selectedCampus) newErrors.campus = 'Select a campus';
       if (!selectedDepartment) newErrors.department = 'Select a department';
     }
+
     if (selectedRole === 'STAFF') {
       if (!selectedCampus) newErrors.campus = 'Select a campus';
       if (!selectedDepartment) newErrors.department = 'Select a department';
       if (!isRequired(form.staffId)) newErrors.staffId = 'Staff ID is required';
     }
+
     if (selectedRole === 'ALUMNI') {
       if (!isRequired(form.graduationYear)) newErrors.graduationYear = 'Graduation year is required';
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -127,8 +132,8 @@ const Register = () => {
       phoneNumber: form.phoneNumber,
       password: form.password,
       role: selectedRole,
-      campusId: selectedRole !== 'ALUMNI' ? selectedCampus : undefined,
-      departmentId: selectedRole !== 'ALUMNI' ? selectedDepartment : undefined,
+      campusId: selectedRole === 'STUDENT' || selectedRole === 'STAFF' ? selectedCampus : undefined,
+      departmentId: selectedRole === 'STUDENT' || selectedRole === 'STAFF' ? selectedDepartment : undefined,
       course: selectedRole === 'STUDENT' ? form.course : undefined,
       yearOfStudy: selectedRole === 'STUDENT' && form.yearOfStudy ? parseInt(form.yearOfStudy) : undefined,
       staffId: selectedRole === 'STAFF' ? form.staffId : undefined,
@@ -204,6 +209,12 @@ const Register = () => {
               onChange={handleRoleChange}
               required
             />
+
+            {selectedRole === 'GUEST' && (
+              <div className="p-3 rounded-lg bg-rvnp-green bg-opacity-5 border border-rvnp-green text-xs text-rvnp-green">
+                Guest accounts can browse public content and chat with HDM AI to learn about RVNP. Some features are restricted.
+              </div>
+            )}
 
             <div className="relative">
               <IoPerson className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />

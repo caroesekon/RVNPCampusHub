@@ -10,7 +10,6 @@ import VerifyEmail from '../pages/auth/VerifyEmail.jsx';
 
 import Feed from '../pages/Feed.jsx';
 import Reels from '../pages/Reels.jsx';
-import UploadReel from '../pages/UploadReel.jsx';
 import Messages from '../pages/Messages.jsx';
 import Chat from '../pages/Chat.jsx';
 import Notifications from '../pages/Notifications.jsx';
@@ -25,11 +24,11 @@ import Settings from '../pages/Settings.jsx';
 import PrivacySettings from '../pages/PrivacySettings.jsx';
 import Stories from '../pages/Stories.jsx';
 import CreateStory from '../pages/CreateStory.jsx';
-import Followers from '../pages/Followers.jsx';
 import Friends from '../pages/Friends.jsx';
+import Followers from '../pages/Followers.jsx';
 import HashtagPage from '../pages/HashtagPage.jsx';
-import Leaderboard from '../pages/Leaderboard.jsx';
 import Badges from '../pages/Badges.jsx';
+import Leaderboard from '../pages/Leaderboard.jsx';
 import NotFound from '../pages/NotFound.jsx';
 
 const AppRoutes = () => {
@@ -44,7 +43,6 @@ const AppRoutes = () => {
       <Route path="/" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />
-      <Route path="/reels/upload" element={<ProtectedRoute><UploadReel /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/messages/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
@@ -59,11 +57,12 @@ const AppRoutes = () => {
       <Route path="/privacy" element={<ProtectedRoute><PrivacySettings /></ProtectedRoute>} />
       <Route path="/stories/:userId" element={<ProtectedRoute><Stories /></ProtectedRoute>} />
       <Route path="/stories/create" element={<ProtectedRoute><CreateStory /></ProtectedRoute>} />
-      <Route path="/followers" element={<ProtectedRoute><Followers /></ProtectedRoute>} />
       <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
+      <Route path="/followers" element={<ProtectedRoute><Followers /></ProtectedRoute>} />
       <Route path="/hashtags/:name" element={<ProtectedRoute><HashtagPage /></ProtectedRoute>} />
-      <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
       <Route path="/badges" element={<ProtectedRoute><Badges /></ProtectedRoute>} />
+      <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

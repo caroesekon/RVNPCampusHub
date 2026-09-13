@@ -46,25 +46,19 @@ const Search = () => {
 
   useEffect(() => {
     if (query.trim() && searched) {
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
-
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       debounceTimeout.current = setTimeout(() => {
         handleSearch();
       }, 500);
     }
 
     return () => {
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
   }, [query, activeTab]);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
-
     setLoading(true);
 
     try {
@@ -77,35 +71,30 @@ const Search = () => {
             setResults((prev) => ({ ...prev, users: response.data.data.users || [] }));
           }
           break;
-
         case 'posts':
           response = await searchApi.searchPosts(query);
           if (response.data.success) {
             setResults((prev) => ({ ...prev, posts: response.data.data.posts || [] }));
           }
           break;
-
         case 'reels':
           response = await searchApi.searchReels(query);
           if (response.data.success) {
             setResults((prev) => ({ ...prev, reels: response.data.data.reels || [] }));
           }
           break;
-
         case 'groups':
           response = await searchApi.searchGroups(query);
           if (response.data.success) {
             setResults((prev) => ({ ...prev, groups: response.data.data.groups || [] }));
           }
           break;
-
         case 'events':
           response = await searchApi.searchEvents(query);
           if (response.data.success) {
             setResults((prev) => ({ ...prev, events: response.data.data.events || [] }));
           }
           break;
-
         case 'marketplace':
           response = await searchApi.searchMarketplace(query);
           if (response.data.success) {
@@ -113,8 +102,8 @@ const Search = () => {
           }
           break;
       }
-    } catch (error) {
-      console.error('Search failed:', error.message);
+    } catch {
+      // Silent
     } finally {
       setLoading(false);
     }
@@ -139,33 +128,9 @@ const Search = () => {
     }
   };
 
-  const handleUserClick = (userId) => {
-    navigate(`/profile/${userId}`);
-  };
-
-  const handlePostClick = (postId) => {
-    navigate(`/post/${postId}`);
-  };
-
-  const handleGroupClick = (groupId) => {
-    navigate(`/groups/${groupId}`);
-  };
-
-  const handleEventClick = (eventId) => {
-    navigate(`/events/${eventId}`);
-  };
-
-  const handleListingClick = (listingId) => {
-    navigate(`/marketplace/${listingId}`);
-  };
-
   const renderResults = () => {
     if (loading) {
-      return (
-        <div className="flex justify-center py-20">
-          <Spinner size="lg" />
-        </div>
-      );
+      return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;
     }
 
     if (!searched || !query.trim()) {
@@ -180,15 +145,13 @@ const Search = () => {
 
     switch (activeTab) {
       case 'users':
-        if (results.users.length === 0) {
-          return <EmptyState title="No users found" />;
-        }
+        if (results.users.length === 0) return <EmptyState title="No users found" />;
         return (
           <div className="space-y-2">
             {results.users.map((user) => (
               <button
                 key={user.id}
-                onClick={() => handleUserClick(user.id)}
+                onClick={() => navigate(`/profile/${user.id}`)}
                 className="w-full flex items-center gap-3 p-3 rounded-xl border border-border-color bg-bg-primary hover:bg-bg-secondary transition-all text-left cursor-pointer"
               >
                 <Avatar src={user.avatarUrl} name={user.fullName} size="md" />
@@ -197,12 +160,8 @@ const Search = () => {
                     <span className="font-medium text-text-primary truncate">{user.fullName}</span>
                     {user.hdmVerified && <VerifiedBadge size={14} />}
                   </div>
-                  {user.course && (
-                    <span className="text-xs text-text-muted">{user.course}</span>
-                  )}
-                  {user.campus && (
-                    <span className="text-xs text-text-muted block">📍 {user.campus.name}</span>
-                  )}
+                  {user.course && <span className="text-xs text-text-muted">{user.course}</span>}
+                  {user.campus && <span className="text-xs text-text-muted block">📍 {user.campus.name}</span>}
                 </div>
               </button>
             ))}
@@ -210,20 +169,19 @@ const Search = () => {
         );
 
       case 'posts':
-        if (results.posts.length === 0) {
-          return <EmptyState title="No posts found" />;
-        }
+        if (results.posts.length === 0) return <EmptyState title="No posts found" />;
         return (
           <div className="space-y-2">
             {results.posts.map((post) => (
               <button
                 key={post.id}
-                onClick={() => handlePostClick(post.id)}
+                onClick={() => navigate('/feed')}
                 className="w-full p-4 rounded-xl border border-border-color bg-bg-primary hover:bg-bg-secondary transition-all text-left cursor-pointer"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Avatar src={post.user?.avatarUrl} name={post.user?.fullName} size="sm" />
                   <span className="font-medium text-text-primary">{post.user?.fullName}</span>
+                  {post.user?.hdmVerified && <VerifiedBadge size={12} />}
                   <span className="text-xs text-text-muted">{timeAgo(post.createdAt)}</span>
                 </div>
                 <p className="text-text-primary text-sm line-clamp-3">{post.content?.text}</p>
@@ -233,26 +191,15 @@ const Search = () => {
         );
 
       case 'reels':
-        if (results.reels.length === 0) {
-          return <EmptyState title="No reels found" />;
-        }
+        if (results.reels.length === 0) return <EmptyState title="No reels found" />;
         return (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {results.reels.map((reel) => (
-              <button
-                key={reel.id}
-                onClick={() => navigate('/reels')}
-                className="aspect-video rounded-lg overflow-hidden bg-bg-secondary cursor-pointer hover:opacity-80 transition-opacity"
-              >
+              <button key={reel.id} onClick={() => navigate('/reels')} className="relative aspect-[9/16] rounded-lg overflow-hidden bg-bg-secondary cursor-pointer hover:opacity-80">
                 {reel.thumbnailUrl ? (
                   <img src={reel.thumbnailUrl} alt={reel.caption} className="w-full h-full object-cover" />
                 ) : (
                   <video src={reel.videoUrl} className="w-full h-full object-cover" />
-                )}
-                {reel.caption && (
-                  <span className="absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-50 text-white text-xs truncate">
-                    {reel.caption}
-                  </span>
                 )}
               </button>
             ))}
@@ -260,15 +207,13 @@ const Search = () => {
         );
 
       case 'groups':
-        if (results.groups.length === 0) {
-          return <EmptyState title="No groups found" />;
-        }
+        if (results.groups.length === 0) return <EmptyState title="No groups found" />;
         return (
           <div className="space-y-2">
             {results.groups.map((group) => (
               <button
                 key={group.id}
-                onClick={() => handleGroupClick(group.id)}
+                onClick={() => navigate(`/groups/${group.id}`)}
                 className="w-full flex items-center gap-3 p-3 rounded-xl border border-border-color bg-bg-primary hover:bg-bg-secondary transition-all text-left cursor-pointer"
               >
                 <div className="p-2 rounded-full bg-bg-secondary">
@@ -276,30 +221,21 @@ const Search = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-text-primary block truncate">{group.name}</span>
-                  <span className="text-xs text-text-muted">
-                    {group._count?.members || 0} members
-                  </span>
+                  <span className="text-xs text-text-muted">{group._count?.members || 0} members</span>
                 </div>
-                {group.description && (
-                  <span className="text-xs text-text-muted truncate max-w-[150px] hidden sm:block">
-                    {group.description}
-                  </span>
-                )}
               </button>
             ))}
           </div>
         );
 
       case 'events':
-        if (results.events.length === 0) {
-          return <EmptyState title="No events found" />;
-        }
+        if (results.events.length === 0) return <EmptyState title="No events found" />;
         return (
           <div className="space-y-2">
             {results.events.map((event) => (
               <button
                 key={event.id}
-                onClick={() => handleEventClick(event.id)}
+                onClick={() => navigate('/events')}
                 className="w-full flex items-center gap-3 p-3 rounded-xl border border-border-color bg-bg-primary hover:bg-bg-secondary transition-all text-left cursor-pointer"
               >
                 <div className="p-2 rounded-full bg-bg-secondary">
@@ -307,9 +243,7 @@ const Search = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-text-primary block truncate">{event.title}</span>
-                  {event.location && (
-                    <span className="text-xs text-text-muted">📍 {event.location}</span>
-                  )}
+                  {event.location && <span className="text-xs text-text-muted">📍 {event.location}</span>}
                 </div>
               </button>
             ))}
@@ -317,15 +251,13 @@ const Search = () => {
         );
 
       case 'marketplace':
-        if (results.listings.length === 0) {
-          return <EmptyState title="No listings found" />;
-        }
+        if (results.listings.length === 0) return <EmptyState title="No listings found" />;
         return (
           <div className="space-y-2">
             {results.listings.map((listing) => (
               <button
                 key={listing.id}
-                onClick={() => handleListingClick(listing.id)}
+                onClick={() => navigate('/marketplace')}
                 className="w-full flex items-center gap-3 p-3 rounded-xl border border-border-color bg-bg-primary hover:bg-bg-secondary transition-all text-left cursor-pointer"
               >
                 <div className="p-2 rounded-full bg-bg-secondary">
@@ -335,9 +267,7 @@ const Search = () => {
                   <span className="font-medium text-text-primary block truncate">{listing.title}</span>
                   <span className="text-xs text-text-muted">{listing.category}</span>
                 </div>
-                <span className="font-semibold text-rvnp-green shrink-0">
-                  {formatPrice(listing.price)}
-                </span>
+                <span className="font-semibold text-rvnp-green shrink-0">{formatPrice(listing.price)}</span>
               </button>
             ))}
           </div>
@@ -351,9 +281,7 @@ const Search = () => {
   return (
     <Layout>
       <div className="w-full">
-        <h1 className="text-2xl font-heading font-bold text-text-primary mb-4">
-          Search
-        </h1>
+        <h1 className="text-2xl font-heading font-bold text-text-primary mb-4">Search</h1>
 
         <div className="relative mb-4">
           <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />

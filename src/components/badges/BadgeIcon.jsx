@@ -5,10 +5,16 @@ const BadgeIcon = ({ badge, size = 'md', showTooltip = true }) => {
     lg: 'text-3xl',
   };
 
+  if (!badge) return null;
+
   return (
     <span
       className={`${sizes[size]} ${showTooltip ? 'cursor-help' : ''}`}
-      title={showTooltip ? `${badge.icon} ${badge.name}: ${badge.description}` : badge.name}
+      title={
+        showTooltip
+          ? `${badge.icon} ${badge.name}: ${badge.description}`
+          : badge.name
+      }
     >
       {badge.icon}
     </span>

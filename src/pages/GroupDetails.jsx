@@ -47,6 +47,8 @@ const GroupDetails = () => {
 
   const avatarInputRef = useRef(null);
 
+  const isGuest = user?.role === 'GUEST';
+
   useEffect(() => {
     fetchGroup();
     fetchMembers();
@@ -67,29 +69,52 @@ const GroupDetails = () => {
           privacy: response.data.data.privacy || 'PUBLIC',
         });
       }
-    } catch { /* Silent */ } finally { setLoading(false); }
+    } catch {
+      // Silent
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchMembers = async () => {
     try {
       const response = await groupApi.getGroupMembers(id);
       if (response.data.success) setMembers(response.data.data.members || []);
-    } catch { /* Silent */ }
+    } catch {
+      // Silent
+    }
   };
 
   const fetchPosts = async () => {
     try {
       const response = await groupApi.getGroupPosts(id);
       if (response.data.success) setPosts(response.data.data.posts || []);
-    } catch { /* Silent */ }
+    } catch {
+      // Silent
+    }
   };
 
   const handleJoin = async () => {
-    try { await groupApi.joinGroup(id); setIsMember(true); fetchGroup(); fetchMembers(); } catch { /* Silent */ }
+    if (isGuest) return;
+    try {
+      await groupApi.joinGroup(id);
+      setIsMember(true);
+      fetchGroup();
+      fetchMembers();
+    } catch {
+      // Silent
+    }
   };
 
   const handleLeave = async () => {
-    try { await groupApi.leaveGroup(id); setIsMember(false); fetchGroup(); fetchMembers(); } catch { /* Silent */ }
+    try {
+      await groupApi.leaveGroup(id);
+      setIsMember(false);
+      fetchGroup();
+      fetchMembers();
+    } catch {
+      // Silent
+    }
   };
 
   const handlePostImageSelect = (e) => {
@@ -129,7 +154,9 @@ const GroupDetails = () => {
       }
     } catch (error) {
       setError(error.response?.data?.message || 'Post failed');
-    } finally { setPosting(false); }
+    } finally {
+      setPosting(false);
+    }
   };
 
   const handleAvatarUpload = async (e) => {
@@ -141,7 +168,9 @@ const GroupDetails = () => {
         await groupApi.updateGroup(id, { avatarUrl: response.data.data.url });
         fetchGroup();
       }
-    } catch { /* Silent */ }
+    } catch {
+      // Silent
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -149,10 +178,15 @@ const GroupDetails = () => {
     setError('');
     try {
       const response = await groupApi.updateGroup(id, settingsForm);
-      if (response.data.success) { setShowSettings(false); fetchGroup(); }
+      if (response.data.success) {
+        setShowSettings(false);
+        fetchGroup();
+      }
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to save');
-    } finally { setSavingSettings(false); }
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   const categoryOptions = [
@@ -206,19 +240,21 @@ const GroupDetails = () => {
             )}
             {group?.campus && <span>📍 {group.campus.name}</span>}
           </div>
-          <div className="mt-4">
-            {isMember ? (
-              !isAdmin && (
-                <Button variant="secondary" size="sm" onClick={handleLeave}>
-                  <IoLogOut className="inline mr-1" size={16} /> Leave Group
+          {!isGuest && (
+            <div className="mt-4">
+              {isMember ? (
+                !isAdmin && (
+                  <Button variant="secondary" size="sm" onClick={handleLeave}>
+                    <IoLogOut className="inline mr-1" size={16} /> Leave Group
+                  </Button>
+                )
+              ) : (
+                <Button size="sm" onClick={handleJoin}>
+                  <IoLogIn className="inline mr-1" size={16} /> Join Group
                 </Button>
-              )
-            ) : (
-              <Button size="sm" onClick={handleJoin}>
-                <IoLogIn className="inline mr-1" size={16} /> Join Group
-              </Button>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 mb-4 border-b border-border-color">
@@ -232,7 +268,7 @@ const GroupDetails = () => {
 
         {activeTab === 'posts' ? (
           <div className="space-y-3">
-            {isMember && (
+            {isMember && !isGuest && (
               <Button size="sm" onClick={() => setShowPostComposer(true)}>
                 <IoAdd className="inline mr-1" size={16} /> Post in Group
               </Button>
@@ -273,7 +309,6 @@ const GroupDetails = () => {
         )}
       </div>
 
-      {/* Post Composer Modal */}
       <Modal isOpen={showPostComposer} onClose={() => setShowPostComposer(false)} title="Post in Group" size="md">
         <div className="space-y-3">
           {error && (
@@ -311,7 +346,6 @@ const GroupDetails = () => {
         </div>
       </Modal>
 
-      {/* Settings Modal */}
       <Modal isOpen={showSettings} onClose={() => setShowSettings(false)} title="Group Settings" size="md">
         <div className="space-y-4">
           {error && (

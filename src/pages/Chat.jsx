@@ -35,6 +35,8 @@ const Chat = () => {
 
   const messagesEndRef = useRef(null);
 
+  const isGuest = user?.role === 'GUEST';
+
   useEffect(() => {
     if (conversationId === 'ai') {
       setIsAIChat(true);
@@ -67,9 +69,7 @@ const Chat = () => {
   const fetchAIStatus = async () => {
     try {
       const response = await aiApi.getStatus();
-      if (response.data.success) {
-        setAiStatus(response.data.data);
-      }
+      if (response.data.success) setAiStatus(response.data.data);
     } catch {
       // Silent
     }
@@ -85,10 +85,8 @@ const Chat = () => {
 
   const fetchConversation = async () => {
     if (!conversationId || conversationId === 'ai') return;
-
     try {
       const response = await messageApi.getConversationById(conversationId);
-
       if (response.data.success && response.data.data) {
         setConversation(response.data.data);
       }
@@ -99,11 +97,9 @@ const Chat = () => {
 
   const fetchMessages = async () => {
     if (!conversationId || conversationId === 'ai') return;
-
     setLoading(true);
     try {
       const response = await messageApi.getMessages(conversationId);
-
       if (response.data.success) {
         setMessages(response.data.data.messages || []);
       }
@@ -115,7 +111,7 @@ const Chat = () => {
   };
 
   const handleSend = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || isGuest) return;
     setSending(true);
 
     try {
@@ -178,7 +174,6 @@ const Chat = () => {
   return (
     <Layout>
       <div className="w-full flex flex-col h-[calc(100vh-10rem)] lg:h-[calc(100vh-7rem)]">
-        {/* Header */}
         <div className="flex items-center gap-3 p-3 border-b border-border-color shrink-0">
           <button
             onClick={() => navigate('/messages')}
@@ -221,12 +216,9 @@ const Chat = () => {
           )}
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {loading && !isAIChat ? (
-            <div className="flex justify-center py-10">
-              <Spinner size="md" />
-            </div>
+            <div className="flex justify-center py-10"><Spinner size="md" /></div>
           ) : messages.length === 0 && !aiTyping ? (
             <div className="text-center text-text-muted py-10">
               {isAIChat ? 'Ask HDM AI anything!' : 'No messages yet. Say hello!'}
@@ -235,11 +227,7 @@ const Chat = () => {
             messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${
-                  message.senderId === user?.id
-                    ? 'justify-end'
-                    : 'justify-start'
-                }`}
+                className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
               >
                 {message.senderId !== user?.id && (
                   <div className="mr-2 shrink-0">
@@ -278,7 +266,6 @@ const Chat = () => {
             ))
           )}
 
-          {/* AI Typing Dots */}
           {aiTyping && (
             <div className="flex justify-start">
               <div className="mr-2 shrink-0">
@@ -297,25 +284,47 @@ const Chat = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="p-3 border-t border-border-color shrink-0">
-          <div className="flex items-end gap-2">
-            <MentionTextarea
-              value={newMessage}
-              onChange={setNewMessage}
-              placeholder={isAIChat ? 'Ask HDM AI...' : 'Type a message...'}
-              rows={1}
-              className="flex-1 bg-bg-secondary text-text-primary rounded-lg p-2 sm:p-3 resize-none focus:outline-none placeholder:text-text-muted text-sm sm:text-base"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!newMessage.trim() || sending}
-              className="p-2.5 rounded-full bg-rvnp-green text-rvnp-white hover:bg-rvnp-green-light disabled:opacity-50 shrink-0"
-            >
-              <IoSend size={18} />
-            </button>
+        {!isGuest && (
+          <div className="p-3 border-t border-border-color shrink-0">
+            <div className="flex items-end gap-2">
+              <MentionTextarea
+                value={newMessage}
+                onChange={setNewMessage}
+                placeholder={isAIChat ? 'Ask HDM AI...' : 'Type a message...'}
+                rows={1}
+                className="flex-1 bg-bg-secondary text-text-primary rounded-lg p-2 sm:p-3 resize-none focus:outline-none placeholder:text-text-muted text-sm sm:text-base"
+              />
+              <button
+                onClick={handleSend}
+                disabled={!newMessage.trim() || sending}
+                className="p-2.5 rounded-full bg-rvnp-green text-rvnp-white hover:bg-rvnp-green-light disabled:opacity-50 shrink-0"
+              >
+                <IoSend size={18} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {isGuest && isAIChat && (
+          <div className="p-3 border-t border-border-color shrink-0">
+            <div className="flex items-end gap-2">
+              <MentionTextarea
+                value={newMessage}
+                onChange={setNewMessage}
+                placeholder="Ask HDM AI about RVNP..."
+                rows={1}
+                className="flex-1 bg-bg-secondary text-text-primary rounded-lg p-2 sm:p-3 resize-none focus:outline-none placeholder:text-text-muted text-sm sm:text-base"
+              />
+              <button
+                onClick={handleSend}
+                disabled={!newMessage.trim() || sending}
+                className="p-2.5 rounded-full bg-rvnp-green text-rvnp-white hover:bg-rvnp-green-light disabled:opacity-50 shrink-0"
+              >
+                <IoSend size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

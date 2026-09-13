@@ -8,10 +8,8 @@ const RightPanel = () => {
   return (
     <aside className="hidden xl:block w-72 shrink-0 border-l border-border-color bg-bg-secondary">
       <div className="sticky top-20 p-4 space-y-4">
-        {/* Trending Hashtags */}
         <TrendingHashtags />
 
-        {/* Campuses */}
         <div className="bg-bg-primary rounded-xl p-4 border border-border-color">
           <h3 className="font-heading font-semibold text-text-primary mb-3">
             Campuses
@@ -33,7 +31,6 @@ const RightPanel = () => {
           </div>
         </div>
 
-        {/* Brand Card */}
         <div className="bg-rvnp-green rounded-xl p-4">
           <h4 className="font-heading font-semibold text-rvnp-white mb-1">
             RVNP Connected

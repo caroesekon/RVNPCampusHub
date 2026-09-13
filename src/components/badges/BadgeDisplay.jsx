@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import BadgeIcon from './BadgeIcon.jsx';
 import badgeApi from '../../api/badgeApi.js';
-import Spinner from '../ui/Spinner.jsx';
 
 const BadgeDisplay = ({ userId }) => {
   const [badges, setBadges] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBadges();
+    if (userId) {
+      fetchBadges();
+    }
   }, [userId]);
 
   const fetchBadges = async () => {

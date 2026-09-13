@@ -7,7 +7,9 @@ const getTopContributors = (period = 'all', limit = 10) => {
 };
 
 const getTopFans = (limit = 10) => {
-  return axiosInstance.get('/leaderboard/fans', { params: { limit } });
+  return axiosInstance.get('/leaderboard/fans', {
+    params: { limit },
+  });
 };
 
 export default {

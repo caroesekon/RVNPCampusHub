@@ -12,9 +12,7 @@ const MentionTextarea = ({
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
-  const [mentionQuery, setMentionQuery] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const textareaRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -44,7 +42,6 @@ const MentionTextarea = ({
     const atMatch = textBeforeCursor.match(/@(\w*)$/);
 
     if (atMatch) {
-      setMentionQuery(atMatch[1]);
       setShowDropdown(true);
       searchUsers(atMatch[1]);
     } else {
@@ -86,21 +83,6 @@ const MentionTextarea = ({
     }, 0);
   };
 
-  const renderTextWithMentions = (text) => {
-    if (!text) return null;
-    const parts = text.split(/(@[\w\s]+)/g);
-    return parts.map((part, index) => {
-      if (part.startsWith('@')) {
-        return (
-          <span key={index} className="text-rvnp-green font-medium">
-            {part}
-          </span>
-        );
-      }
-      return <span key={index}>{part}</span>;
-    });
-  };
-
   return (
     <div className="relative w-full">
       <textarea
@@ -112,36 +94,38 @@ const MentionTextarea = ({
         className={className}
       />
 
-      {showDropdown && searchResults.length > 0 && (
+      {showDropdown && (
         <div
           ref={dropdownRef}
           className="absolute z-50 w-64 max-h-48 overflow-y-auto mt-1 bg-bg-primary border border-border-color rounded-lg shadow-lg"
         >
-          {searchResults.map((user) => (
-            <button
-              key={user.id}
-              type="button"
-              onClick={() => handleSelectUser(user)}
-              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-bg-secondary transition-all text-left"
-            >
-              <Avatar src={user.avatarUrl} name={user.fullName} size="sm" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-text-primary truncate">{user.fullName}</span>
-                  {user.hdmVerified && <VerifiedBadge size={10} />}
+          {searchResults.length > 0 ? (
+            searchResults.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                onClick={() => handleSelectUser(user)}
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-bg-secondary transition-all text-left"
+              >
+                <Avatar src={user.avatarUrl} name={user.fullName} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-text-primary truncate">
+                      {user.fullName}
+                    </span>
+                    {user.hdmVerified && <VerifiedBadge size={10} />}
+                  </div>
+                  {user.course && (
+                    <span className="text-xs text-text-muted">{user.course}</span>
+                  )}
                 </div>
-                {user.course && (
-                  <span className="text-xs text-text-muted">{user.course}</span>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {showDropdown && searchResults.length === 0 && (
-        <div className="absolute z-50 w-64 mt-1 p-3 bg-bg-primary border border-border-color rounded-lg shadow-lg">
-          <p className="text-sm text-text-muted text-center">No users found</p>
+              </button>
+            ))
+          ) : (
+            <div className="p-3">
+              <p className="text-sm text-text-muted text-center">No users found</p>
+            </div>
+          )}
         </div>
       )}
     </div>

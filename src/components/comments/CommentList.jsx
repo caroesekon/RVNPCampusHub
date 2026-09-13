@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IoHeart, IoHeartOutline, IoTrash, IoSend } from 'react-icons/io5';
 import Avatar from '../ui/Avatar.jsx';
 import VerifiedBadge from '../ui/VerifiedBadge.jsx';
+import GuestBadge from '../ui/GuestBadge.jsx';
 import Spinner from '../ui/Spinner.jsx';
 import EmptyState from '../ui/EmptyState.jsx';
 import MentionTextarea from '../mentions/MentionTextarea.jsx';
@@ -136,11 +137,12 @@ const CommentList = ({ postId = null, reelId = null, groupPostId = null, onComme
                 <Avatar src={comment.user?.avatarUrl} name={comment.user?.fullName} size="sm" onClick={() => navigate(`/profile/${comment.user?.id}`)} />
                 <div className="flex-1 min-w-0">
                   <div className="bg-bg-secondary rounded-xl px-3 py-2">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-wrap">
                       <span className="font-medium text-text-primary text-sm cursor-pointer hover:underline" onClick={() => navigate(`/profile/${comment.user?.id}`)}>
                         {comment.user?.fullName}
                       </span>
                       {comment.user?.hdmVerified && <VerifiedBadge size={12} />}
+                      {comment.user?.role === 'GUEST' && <GuestBadge size="sm" />}
                     </div>
                     <p className="text-text-primary text-sm mt-0.5 break-words">{comment.content}</p>
                   </div>
@@ -182,9 +184,10 @@ const CommentList = ({ postId = null, reelId = null, groupPostId = null, onComme
                         <div key={reply.id} className="flex gap-2">
                           <Avatar src={reply.user?.avatarUrl} name={reply.user?.fullName} size="sm" />
                           <div className="flex-1 bg-bg-secondary rounded-xl px-3 py-2">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <span className="font-medium text-text-primary text-xs">{reply.user?.fullName}</span>
                               {reply.user?.hdmVerified && <VerifiedBadge size={10} />}
+                              {reply.user?.role === 'GUEST' && <GuestBadge size="sm" />}
                             </div>
                             <p className="text-text-primary text-xs mt-0.5">{reply.content}</p>
                           </div>

@@ -5,7 +5,6 @@ import Layout from '../components/layout/Layout.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
 import PostCard from '../components/posts/PostCard.jsx';
-import hashtagApi from '../api/hashtagApi.js';
 import searchApi from '../api/searchApi.js';
 
 const HashtagPage = () => {
@@ -15,7 +14,9 @@ const HashtagPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPosts();
+    if (name) {
+      fetchPosts();
+    }
   }, [name]);
 
   const fetchPosts = async () => {
@@ -36,22 +37,34 @@ const HashtagPage = () => {
     <Layout>
       <div className="w-full">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-lg hover:bg-bg-secondary text-text-secondary"
+          >
             <IoArrowBack size={20} />
           </button>
           <div className="flex items-center gap-2">
             <IoPricetag size={18} className="text-rvnp-green" />
-            <h1 className="text-2xl font-heading font-bold text-text-primary">#{name}</h1>
+            <h1 className="text-2xl font-heading font-bold text-text-primary">
+              #{name}
+            </h1>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+          <div className="flex justify-center py-20">
+            <Spinner size="lg" />
+          </div>
         ) : posts.length === 0 ? (
-          <EmptyState title="No posts yet" description={`No posts with #${name}`} />
+          <EmptyState
+            title="No posts yet"
+            description={`No posts with #${name}`}
+          />
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => <PostCard key={post.id} post={post} />)}
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
           </div>
         )}
       </div>

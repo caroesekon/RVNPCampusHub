@@ -9,11 +9,14 @@ import {
 } from 'react-icons/io5';
 import Avatar from '../ui/Avatar.jsx';
 import VerifiedBadge from '../ui/VerifiedBadge.jsx';
+import GuestBadge from '../ui/GuestBadge.jsx';
 import ReactionPicker from '../reactions/ReactionPicker.jsx';
 import ReactionSummary from '../reactions/ReactionSummary.jsx';
 import CommentList from '../comments/CommentList.jsx';
 import CommentAnalysis from '../ai/CommentAnalysis.jsx';
 import ShareModal from '../ui/ShareModal.jsx';
+import HashtagLink from '../hashtags/HashtagLink.jsx';
+import MentionLink from '../mentions/MentionLink.jsx';
 import Modal from '../ui/Modal.jsx';
 import { formatCount } from '../../utils/formatNumber.js';
 import timeAgo from '../../utils/timeAgo.js';
@@ -49,8 +52,8 @@ const PostCard = ({ post, onReaction, onShare }) => {
         const mine = reactions.find((r) => r.userId === user?.id);
         if (mine) setCurrentReaction(mine.type);
       }
-    } catch (error) {
-      console.error('Failed to fetch my reaction:', error.message);
+    } catch {
+      // Silent
     }
   };
 
@@ -96,12 +99,38 @@ const PostCard = ({ post, onReaction, onShare }) => {
     }
   };
 
+  const renderTextWithLinks = (text) => {
+    if (!text) return null;
+
+    const parts = text.split(/(#[\w]+|@[\w\s]+?)(?=\s|$|[^\w])/g);
+
+    return parts.map((part, index) => {
+      if (part.startsWith('#')) {
+        return <HashtagLink key={index} tag={part} />;
+      }
+      if (part.startsWith('@')) {
+        const cleanName = part.substring(1).trim();
+        const tagged = post?.content?.taggedUsers?.find((u) =>
+          cleanName.startsWith(u.fullName)
+        );
+        if (tagged) {
+          return (
+            <MentionLink
+              key={index}
+              mention={{ userId: tagged.id, fullName: tagged.fullName }}
+            />
+          );
+        }
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   const content = post?.content;
 
   return (
     <>
       <div className="bg-bg-primary border border-border-color rounded-xl p-3 sm:p-4 w-full">
-        {/* Header */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="shrink-0">
@@ -113,6 +142,7 @@ const PostCard = ({ post, onReaction, onShare }) => {
                   {post?.user?.fullName}
                 </span>
                 {post?.user?.hdmVerified && <VerifiedBadge size={14} />}
+                {post?.user?.role === 'GUEST' && <GuestBadge size="sm" />}
               </div>
               <span className="text-xs text-text-muted">{timeAgo(post?.createdAt)}</span>
             </div>
@@ -140,9 +170,29 @@ const PostCard = ({ post, onReaction, onShare }) => {
           </div>
         </div>
 
-        {/* Content */}
+        {post?.sharedFrom && (
+          <div className="mt-2 p-3 rounded-lg bg-bg-secondary border border-border-color">
+            <div className="flex items-center gap-2">
+              <Avatar src={post.sharedFrom.user?.avatarUrl} name={post.sharedFrom.user?.fullName} size="sm" />
+              <span className="text-sm font-medium text-text-primary">{post.sharedFrom.user?.fullName}</span>
+              {post.sharedFrom.user?.hdmVerified && <VerifiedBadge size={12} />}
+              {post.sharedFrom.user?.role === 'GUEST' && <GuestBadge size="sm" />}
+            </div>
+            {post.sharedFrom.content?.text && (
+              <p className="text-text-secondary text-sm mt-1 line-clamp-2">
+                {post.sharedFrom.content.text}
+              </p>
+            )}
+            {post.sharedFrom.content?.images && post.sharedFrom.content.images.length > 0 && (
+              <img src={post.sharedFrom.content.images[0]} alt="Shared" className="w-full rounded-lg mt-2 max-h-48 object-cover" />
+            )}
+          </div>
+        )}
+
         {content?.text && (
-          <p className="text-text-primary mt-3 whitespace-pre-wrap text-sm sm:text-base break-words">{content.text}</p>
+          <p className="text-text-primary mt-3 whitespace-pre-wrap text-sm sm:text-base break-words">
+            {renderTextWithLinks(content.text)}
+          </p>
         )}
 
         {content?.feeling && (
@@ -159,17 +209,6 @@ const PostCard = ({ post, onReaction, onShare }) => {
           </div>
         )}
 
-        {content?.taggedUsers && content.taggedUsers.length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-            {content.taggedUsers.map((tagged) => (
-              <span key={tagged.id} className="text-sm text-rvnp-green cursor-pointer hover:underline" onClick={() => navigate(`/profile/${tagged.id}`)}>
-                @{tagged.fullName}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Images Grid */}
         {content?.images && content.images.length > 0 && (
           <div className={`mt-3 grid gap-2 ${content.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {content.images.map((image, index) => (
@@ -194,7 +233,6 @@ const PostCard = ({ post, onReaction, onShare }) => {
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border-color">
           <div className="flex items-center gap-1">
             <ReactionPicker currentReaction={currentReaction} onSelect={handleReaction} onRemove={handleRemoveReaction} />
@@ -215,10 +253,8 @@ const PostCard = ({ post, onReaction, onShare }) => {
         </div>
       </div>
 
-      {/* Image Lightbox - Vertical Scroll */}
       {lightboxOpen && content?.images && content.images.length > 0 && (
         <div className="fixed inset-0 z-[60] bg-black bg-opacity-95 flex flex-col">
-          {/* Top bar */}
           <div className="flex items-center justify-between p-4 shrink-0">
             <span className="text-white text-sm">
               {currentImageIndex + 1} / {content.images.length}
@@ -228,7 +264,6 @@ const PostCard = ({ post, onReaction, onShare }) => {
             </button>
           </div>
 
-          {/* Vertically scrollable images */}
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
@@ -245,7 +280,6 @@ const PostCard = ({ post, onReaction, onShare }) => {
             ))}
           </div>
 
-          {/* Dots indicator */}
           {content.images.length > 1 && (
             <div className="flex justify-center gap-1.5 p-4 shrink-0">
               {content.images.map((_, index) => (
@@ -270,12 +304,10 @@ const PostCard = ({ post, onReaction, onShare }) => {
         </div>
       )}
 
-      {/* Comments Modal */}
       <Modal isOpen={showComments} onClose={() => setShowComments(false)} title="Comments" size="md">
         <CommentList postId={post.id} onCommentCountChange={setCommentCount} />
       </Modal>
 
-      {/* Share Modal */}
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} post={post} onShared={() => setShareCount((prev) => prev + 1)} />
     </>
   );

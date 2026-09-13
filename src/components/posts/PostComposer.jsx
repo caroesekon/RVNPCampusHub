@@ -63,6 +63,8 @@ const PostComposer = ({ onPostCreated }) => {
 
   const videoInputRef = useRef(null);
 
+  const isGuest = user?.role === 'GUEST';
+
   useEffect(() => {
     fetchAIStatus();
   }, []);
@@ -77,6 +79,10 @@ const PostComposer = ({ onPostCreated }) => {
       // Silent
     }
   };
+
+  if (!user) {
+    return null;
+  }
 
   const privacyOptions = [
     { value: 'PUBLIC', label: 'Public' },
@@ -208,6 +214,14 @@ const PostComposer = ({ onPostCreated }) => {
 
   return (
     <div className="bg-bg-primary border border-border-color rounded-xl w-full overflow-hidden">
+      {isGuest && (
+        <div className="px-3 sm:px-4 pt-3">
+          <div className="p-2.5 rounded-lg bg-amber-500 bg-opacity-10 border border-amber-500 text-xs text-amber-600 dark:text-amber-400">
+            👤 You're posting as a <strong>Guest</strong>. Your posts will show a Guest badge.
+          </div>
+        </div>
+      )}
+
       <div className="p-3 sm:p-4">
         <div className="flex gap-2 sm:gap-3 w-full">
           <div className="shrink-0">
@@ -345,7 +359,6 @@ const PostComposer = ({ onPostCreated }) => {
         <Button size="sm" onClick={handleSubmit} loading={loading}>Post</Button>
       </div>
 
-      {/* Modals */}
       <Modal isOpen={showFeelingPicker} onClose={() => setShowFeelingPicker(false)} title="How are you feeling?" size="sm">
         <div className="grid grid-cols-3 gap-2">
           {FEELINGS.map((feel) => (
