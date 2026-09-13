@@ -10,6 +10,7 @@ import VerifyEmail from '../pages/auth/VerifyEmail.jsx';
 
 import Feed from '../pages/Feed.jsx';
 import Reels from '../pages/Reels.jsx';
+import UploadReel from '../pages/UploadReel.jsx';
 import Messages from '../pages/Messages.jsx';
 import Chat from '../pages/Chat.jsx';
 import Notifications from '../pages/Notifications.jsx';
@@ -43,6 +44,7 @@ const AppRoutes = () => {
       <Route path="/" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />
+      <Route path="/reels/upload" element={<ProtectedRoute><UploadReel /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/messages/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
